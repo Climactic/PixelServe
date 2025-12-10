@@ -88,10 +88,14 @@ async function fetchFontCss(
 
   while (match !== null) {
     const block = match[1];
+    if (!block) {
+      match = fontFaceRegex.exec(css);
+      continue;
+    }
 
     // Extract weight
     const weightMatch = block.match(/font-weight:\s*(\d+)/);
-    const weight = weightMatch ? Number.parseInt(weightMatch[1], 10) : 400;
+    const weight = weightMatch?.[1] ? Number.parseInt(weightMatch[1], 10) : 400;
 
     // Extract URL - prefer truetype format
     let urlMatch = block.match(/url\(([^)]+)\)\s*format\(['"]truetype['"]\)/);
@@ -99,7 +103,7 @@ async function fetchFontCss(
       urlMatch = block.match(/url\(([^)]+)\)/);
     }
 
-    if (urlMatch) {
+    if (urlMatch?.[1]) {
       let fontUrl = urlMatch[1].replace(/['"]/g, "");
       if (!fontUrl.startsWith("http")) {
         fontUrl = `https:${fontUrl}`;

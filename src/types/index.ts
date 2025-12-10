@@ -95,3 +95,43 @@ export interface HealthStatus {
   };
   version: string;
 }
+
+export type CacheKeyParams = Record<
+  string,
+  string | number | boolean | undefined
+>;
+
+export function imageParamsToCacheKeyParams(
+  params: ImageParams,
+): CacheKeyParams {
+  return {
+    url: params.url,
+    w: params.w,
+    h: params.h,
+    size: params.size,
+    fit: params.fit,
+    position: params.position,
+    q: params.q,
+    format: params.format,
+    blur: params.blur,
+    grayscale: params.grayscale,
+    rotate: params.rotate,
+    flip: params.flip,
+    flop: params.flop,
+    brightness: params.brightness,
+    saturation: params.saturation,
+    sharpen: params.sharpen,
+    tint: params.tint,
+    trim: params.trim,
+    crop: params.crop,
+    wm_image: params.wm_image,
+    wm_text: params.wm_text,
+    wm_position: params.wm_position,
+    wm_opacity: params.wm_opacity,
+    wm_scale: params.wm_scale,
+    wm_padding: params.wm_padding,
+    wm_font: params.wm_font,
+    wm_fontsize: params.wm_fontsize,
+    wm_color: params.wm_color,
+  };
+}

@@ -6,7 +6,7 @@ import {
   setCache,
 } from "../services/cache";
 import { processImage } from "../services/image-processor";
-import type { ImageParams } from "../types";
+import { type ImageParams, imageParamsToCacheKeyParams } from "../types";
 import { PixelServeError } from "../utils/errors";
 
 const imageQuerySchema = t.Object({
@@ -135,9 +135,7 @@ export const imageRoutes = new Elysia({ prefix: "/image" })
       };
 
       // Generate cache key from all parameters
-      const cacheKey = generateCacheKey(
-        params as Record<string, string | number | boolean | undefined>,
-      );
+      const cacheKey = generateCacheKey(imageParamsToCacheKeyParams(params));
 
       // Check cache
       const cached = await getCached(cacheKey);

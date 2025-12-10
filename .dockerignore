@@ -1,0 +1,54 @@
+# Dependencies
+node_modules
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Cache directories
+cache/
+.cache/
+fonts/*.ttf
+fonts/*.woff2
+
+# Test files
+tests/
+coverage/
+*.lcov
+
+# Documentation
+*.md
+!README.md
+
+# Build artifacts
+dist/
+out/
+*.tgz
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
+
+# Logs
+logs/
+*.log
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore

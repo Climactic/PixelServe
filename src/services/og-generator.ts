@@ -110,7 +110,8 @@ export async function generateOGImage(params: OGParams): Promise<Buffer> {
     }
 
     // Generate SVG with Satori
-    const svg = await satori(element as React.ReactNode, {
+    // ElementNode is compatible with React's internal element format that satori accepts
+    const svg = await satori(element as Parameters<typeof satori>[0], {
       width,
       height,
       fonts: fonts.map((f) => ({

@@ -36,12 +36,22 @@ export async function processImage(
     // Crop (before resize) - format: "x,y,w,h"
     if (params.crop) {
       const parts = params.crop.split(",").map(Number);
-      if (parts.length !== 4 || parts.some(Number.isNaN)) {
+      if (
+        parts.length !== 4 ||
+        parts.some(Number.isNaN) ||
+        parts[0] === undefined ||
+        parts[1] === undefined ||
+        parts[2] === undefined ||
+        parts[3] === undefined
+      ) {
         throw new ValidationError(
           "Invalid crop format. Expected: x,y,width,height",
         );
       }
-      const [left, top, width, height] = parts;
+      const left = parts[0];
+      const top = parts[1];
+      const width = parts[2];
+      const height = parts[3];
       if (left < 0 || top < 0 || width <= 0 || height <= 0) {
         throw new ValidationError("Invalid crop dimensions");
       }
