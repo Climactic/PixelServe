@@ -1,6 +1,10 @@
+<div align="center">
+<img src=".github/assets/og.png" />
+
 # PixelServe
 
 A high-performance image processing microservice built with Bun, ElysiaJS, and Sharp. Provides on-the-fly image transformations and dynamic Open Graph image generation via simple URL parameters.
+</div>
 
 ## Features
 
@@ -11,6 +15,14 @@ A high-performance image processing microservice built with Bun, ElysiaJS, and S
 - **Smart Caching** - Disk, memory, or no caching with CDN-friendly headers
 - **SSRF Protection** - Blocks private IPs, localhost, and dangerous protocols
 - **Type-Safe** - Full TypeScript with Elysia's TypeBox validation
+
+## Support
+
+If you find PixelServe useful, consider supporting its development:
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ec6cb9?logo=github)](https://github.com/sponsors/climactic)
+
+Your sponsorship helps maintain and improve PixelServe with new features, better documentation, and continued support.
 
 ## Quick Start
 
