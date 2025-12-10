@@ -4,6 +4,13 @@
 # PixelServe
 
 A high-performance image processing microservice built with Bun, ElysiaJS, and Sharp. Provides on-the-fly image transformations and dynamic Open Graph image generation via simple URL parameters.
+
+[![GitHub Release](https://img.shields.io/github/v/release/climactic/pixelserve?style=for-the-badge&logo=github)](https://github.com/climactic/pixelserve/releases)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io%2Fclimactic%2Fpixelserve-blue?style=for-the-badge&logo=docker)](https://ghcr.io/climactic/pixelserve)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/nsZySRkUfQ)
+[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ec6cb9?style=for-the-badge&logo=github-sponsors)](https://github.com/sponsors/climactic)
+[![License](https://img.shields.io/badge/License-AGPLv3-green?style=for-the-badge)](LICENSE)
+
 </div>
 
 ## Features
@@ -16,15 +23,39 @@ A high-performance image processing microservice built with Bun, ElysiaJS, and S
 - **SSRF Protection** - Blocks private IPs, localhost, and dangerous protocols
 - **Type-Safe** - Full TypeScript with Elysia's TypeBox validation
 
-## Support
-
-If you find PixelServe useful, consider supporting its development:
-
-[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ec6cb9?logo=github)](https://github.com/sponsors/climactic)
-
-Your sponsorship helps maintain and improve PixelServe with new features, better documentation, and continued support.
-
 ## Quick Start
+
+### Docker (Recommended)
+
+```bash
+# Pull and run from GitHub Container Registry
+docker pull ghcr.io/climactic/pixelserve:latest
+docker run -p 3000:3000 ghcr.io/climactic/pixelserve:latest
+
+# With environment variables
+docker run -p 3000:3000 \
+  -e CACHE_MODE=disk \
+  -e CACHE_DIR=/app/cache \
+  -v ./cache:/app/cache \
+  ghcr.io/climactic/pixelserve:latest
+```
+
+### Docker Compose
+
+```yaml
+services:
+  pixelserve:
+    image: ghcr.io/climactic/pixelserve:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - CACHE_MODE=disk
+      - CACHE_DIR=/app/cache
+    volumes:
+      - ./cache:/app/cache
+```
+
+### From Source
 
 ```bash
 # Install dependencies
@@ -425,6 +456,12 @@ pixelserve/
 - **Smart Caching**: SHA256-hashed keys with sharded directory structure
 - **CDN-Friendly**: `Cache-Control: public, max-age=31536000, immutable`
 
+## Community
+
+Join our Discord community for support, feature requests, and discussions:
+
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/nsZySRkUfQ)
+
 ## License
 
-AGPLv3
+[AGPLv3](LICENSE)
