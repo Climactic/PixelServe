@@ -1,0 +1,70 @@
+{
+  "name": "blog",
+  "description": "Blog post style with category tag badge",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 80,
+    "direction": "column",
+    "align": "start",
+    "justify": "center",
+    "elements": [
+      {
+        "type": "box",
+        "backgroundColor": "#3b82f6",
+        "padding": 12,
+        "direction": "row",
+        "align": "center",
+        "children": [
+          {
+            "type": "text",
+            "content": "Blog",
+            "fontSize": 20,
+            "fontWeight": 600,
+            "color": "#ffffff"
+          }
+        ]
+      },
+      {
+        "type": "spacer",
+        "size": 32
+      },
+      {
+        "type": "text",
+        "content": "{{title}}",
+        "fontSize": 64,
+        "fontWeight": 700,
+        "color": "#{{fg}}",
+        "lineHeight": 1.2,
+        "maxWidth": 950
+      },
+      {
+        "type": "spacer",
+        "size": 28,
+        "showIf": "description"
+      },
+      {
+        "type": "text",
+        "content": "{{description}}",
+        "fontSize": 28,
+        "fontWeight": 400,
+        "color": "#475569",
+        "lineHeight": 1.5,
+        "maxWidth": 850,
+        "showIf": "description"
+      },
+      {
+        "type": "spacer",
+        "size": 48,
+        "showIf": "logo"
+      },
+      {
+        "type": "image",
+        "src": "{{logo}}",
+        "width": 40,
+        "height": 40,
+        "borderRadius": 20,
+        "showIf": "logo"
+      }
+    ]
+  }
+}

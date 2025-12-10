@@ -1,0 +1,51 @@
+{
+  "name": "company",
+  "description": "Professional company branding template with customizable title/description colors",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 80,
+    "direction": "column",
+    "align": "start",
+    "justify": "center",
+    "elements": [
+      {
+        "type": "image",
+        "src": "{{logo}}",
+        "width": 64,
+        "height": 64,
+        "borderRadius": 12,
+        "showIf": "logo"
+      },
+      {
+        "type": "spacer",
+        "size": 40,
+        "showIf": "logo"
+      },
+      {
+        "type": "text",
+        "content": "{{title}}",
+        "fontSize": 64,
+        "fontWeight": 700,
+        "color": "#{{titleColor}}",
+        "lineHeight": 1.2,
+        "maxWidth": 900
+      },
+      {
+        "type": "spacer",
+        "size": 24,
+        "showIf": "description"
+      },
+      {
+        "type": "text",
+        "content": "{{description}}",
+        "fontSize": 28,
+        "fontWeight": 400,
+        "color": "#{{descColor}}",
+        "opacity": 0.8,
+        "lineHeight": 1.5,
+        "maxWidth": 800,
+        "showIf": "description"
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "name": "brand",
+  "description": "Professional brand-focused layout with gradient accent panel",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 0,
+    "direction": "row",
+    "align": "start",
+    "justify": "start",
+    "elements": [
+      {
+        "type": "box",
+        "padding": 80,
+        "direction": "column",
+        "align": "start",
+        "justify": "center",
+        "children": [
+          {
+            "type": "image",
+            "src": "{{logo}}",
+            "width": 56,
+            "height": 56,
+            "borderRadius": 12,
+            "showIf": "logo"
+          },
+          {
+            "type": "spacer",
+            "size": 40,
+            "showIf": "logo"
+          },
+          {
+            "type": "text",
+            "content": "{{title}}",
+            "fontSize": 56,
+            "fontWeight": 700,
+            "color": "#{{fg}}",
+            "lineHeight": 1.2,
+            "maxWidth": 600
+          },
+          {
+            "type": "spacer",
+            "size": 24,
+            "showIf": "description"
+          },
+          {
+            "type": "text",
+            "content": "{{description}}",
+            "fontSize": 26,
+            "fontWeight": 400,
+            "color": "#94a3b8",
+            "lineHeight": 1.5,
+            "maxWidth": 550,
+            "showIf": "description"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "gradient",
+  "description": "Modern gradient background with glassmorphism card",
+  "layout": {
+    "backgroundGradient": "linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #2563eb 100%)",
+    "padding": 60,
+    "direction": "column",
+    "align": "center",
+    "justify": "center",
+    "elements": [
+      {
+        "type": "box",
+        "backgroundColor": "rgba(255, 255, 255, 0.1)",
+        "padding": 48,
+        "direction": "column",
+        "align": "center",
+        "justify": "center",
+        "children": [
+          {
+            "type": "image",
+            "src": "{{logo}}",
+            "width": 72,
+            "height": 72,
+            "borderRadius": 16,
+            "showIf": "logo"
+          },
+          {
+            "type": "spacer",
+            "size": 24,
+            "showIf": "logo"
+          },
+          {
+            "type": "text",
+            "content": "{{title}}",
+            "fontSize": 56,
+            "fontWeight": 700,
+            "color": "#{{fg}}",
+            "lineHeight": 1.2,
+            "maxWidth": 1000
+          },
+          {
+            "type": "spacer",
+            "size": 20,
+            "showIf": "description"
+          },
+          {
+            "type": "text",
+            "content": "{{description}}",
+            "fontSize": 28,
+            "fontWeight": 400,
+            "color": "#{{fg}}",
+            "opacity": 0.9,
+            "lineHeight": 1.4,
+            "maxWidth": 900,
+            "showIf": "description"
+          }
+        ]
+      }
+    ]
+  }
+}

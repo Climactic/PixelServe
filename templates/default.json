@@ -1,0 +1,52 @@
+{
+  "name": "default",
+  "description": "Clean centered layout with optional background image",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "backgroundImage": "{{image}}",
+    "padding": 60,
+    "direction": "column",
+    "align": "center",
+    "justify": "center",
+    "elements": [
+      {
+        "type": "image",
+        "src": "{{logo}}",
+        "width": 80,
+        "height": 80,
+        "borderRadius": 8,
+        "showIf": "logo"
+      },
+      {
+        "type": "spacer",
+        "size": 30,
+        "showIf": "logo"
+      },
+      {
+        "type": "text",
+        "content": "{{title}}",
+        "fontSize": 64,
+        "fontWeight": 700,
+        "color": "#{{fg}}",
+        "lineHeight": 1.2,
+        "maxWidth": 1000
+      },
+      {
+        "type": "spacer",
+        "size": 24,
+        "showIf": "description"
+      },
+      {
+        "type": "text",
+        "content": "{{description}}",
+        "fontSize": 32,
+        "fontWeight": 400,
+        "color": "#{{fg}}",
+        "opacity": 0.8,
+        "lineHeight": 1.4,
+        "maxWidth": 900,
+        "showIf": "description"
+      }
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "minimal",
+  "description": "Ultra clean minimal design with spacious layout",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 80,
+    "direction": "column",
+    "align": "start",
+    "justify": "between",
+    "elements": [
+      {
+        "type": "image",
+        "src": "{{logo}}",
+        "width": 48,
+        "height": 48,
+        "borderRadius": 8,
+        "showIf": "logo"
+      },
+      {
+        "type": "box",
+        "direction": "column",
+        "align": "start",
+        "children": [
+          {
+            "type": "text",
+            "content": "{{title}}",
+            "fontSize": 72,
+            "fontWeight": 700,
+            "color": "#{{fg}}",
+            "lineHeight": 1.1,
+            "maxWidth": 900
+          },
+          {
+            "type": "spacer",
+            "size": 24,
+            "showIf": "description"
+          },
+          {
+            "type": "text",
+            "content": "{{description}}",
+            "fontSize": 32,
+            "fontWeight": 400,
+            "color": "#64748b",
+            "lineHeight": 1.4,
+            "maxWidth": 800,
+            "showIf": "description"
+          }
+        ]
+      },
+      {
+        "type": "spacer",
+        "size": 48
+      }
+    ]
+  }
+}

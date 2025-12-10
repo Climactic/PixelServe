@@ -1,0 +1,50 @@
+{
+  "name": "sunset",
+  "description": "Warm sunset gradient template",
+  "layout": {
+    "backgroundGradient": "linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #f093fb 100%)",
+    "padding": 80,
+    "direction": "column",
+    "align": "center",
+    "justify": "center",
+    "elements": [
+      {
+        "type": "image",
+        "src": "{{logo}}",
+        "width": 72,
+        "height": 72,
+        "borderRadius": 16,
+        "showIf": "logo"
+      },
+      {
+        "type": "spacer",
+        "size": 24,
+        "showIf": "logo"
+      },
+      {
+        "type": "text",
+        "content": "{{title}}",
+        "fontSize": 56,
+        "fontWeight": 700,
+        "color": "#ffffff",
+        "lineHeight": 1.2,
+        "maxWidth": 800
+      },
+      {
+        "type": "spacer",
+        "size": 20,
+        "showIf": "description"
+      },
+      {
+        "type": "text",
+        "content": "{{description}}",
+        "fontSize": 26,
+        "fontWeight": 400,
+        "color": "#ffffff",
+        "lineHeight": 1.4,
+        "maxWidth": 700,
+        "showIf": "description"
+      }
+    ]
+  }
+}

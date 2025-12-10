@@ -1,0 +1,71 @@
+{
+  "name": "modern",
+  "description": "Clean layout with colorful accent stripe at top",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 0,
+    "direction": "column",
+    "align": "start",
+    "justify": "start",
+    "elements": [
+      {
+        "type": "box",
+        "backgroundGradient": "linear-gradient(90deg, #3b82f6, #a855f7, #ec4899)",
+        "padding": 0,
+        "direction": "row",
+        "children": [
+          {
+            "type": "spacer",
+            "size": 8
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "padding": 80,
+        "direction": "column",
+        "align": "start",
+        "justify": "center",
+        "children": [
+          {
+            "type": "image",
+            "src": "{{logo}}",
+            "width": 64,
+            "height": 64,
+            "borderRadius": 12,
+            "showIf": "logo"
+          },
+          {
+            "type": "spacer",
+            "size": 32,
+            "showIf": "logo"
+          },
+          {
+            "type": "text",
+            "content": "{{title}}",
+            "fontSize": 64,
+            "fontWeight": 700,
+            "color": "#{{fg}}",
+            "lineHeight": 1.1,
+            "maxWidth": 900
+          },
+          {
+            "type": "spacer",
+            "size": 24,
+            "showIf": "description"
+          },
+          {
+            "type": "text",
+            "content": "{{description}}",
+            "fontSize": 28,
+            "fontWeight": 400,
+            "color": "#94a3b8",
+            "lineHeight": 1.5,
+            "maxWidth": 800,
+            "showIf": "description"
+          }
+        ]
+      }
+    ]
+  }
+}

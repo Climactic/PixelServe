@@ -1,0 +1,59 @@
+{
+  "name": "split",
+  "description": "Split layout with content on left and optional image on right",
+  "layout": {
+    "backgroundColor": "#{{bg}}",
+    "padding": 0,
+    "direction": "row",
+    "align": "start",
+    "justify": "start",
+    "elements": [
+      {
+        "type": "box",
+        "padding": 72,
+        "direction": "column",
+        "align": "start",
+        "justify": "center",
+        "children": [
+          {
+            "type": "image",
+            "src": "{{logo}}",
+            "width": 52,
+            "height": 52,
+            "borderRadius": 10,
+            "showIf": "logo"
+          },
+          {
+            "type": "spacer",
+            "size": 32,
+            "showIf": "logo"
+          },
+          {
+            "type": "text",
+            "content": "{{title}}",
+            "fontSize": 56,
+            "fontWeight": 700,
+            "color": "#{{fg}}",
+            "lineHeight": 1.2,
+            "maxWidth": 600
+          },
+          {
+            "type": "spacer",
+            "size": 20,
+            "showIf": "description"
+          },
+          {
+            "type": "text",
+            "content": "{{description}}",
+            "fontSize": 28,
+            "fontWeight": 400,
+            "color": "#94a3b8",
+            "lineHeight": 1.5,
+            "maxWidth": 550,
+            "showIf": "description"
+          }
+        ]
+      }
+    ]
+  }
+}
