@@ -250,6 +250,35 @@ BROWSER_CACHE_TTL=31536000  # 1 year
 TEMPLATES_DIR=./templates
 ```
 
+### Cache Modes
+
+| Mode     | Description                                                                 |
+| -------- | --------------------------------------------------------------------------- |
+| `disk`   | Persist to disk only. Survives restarts but slower reads.                   |
+| `memory` | In-memory LRU cache. Fastest but lost on restart.                           |
+| `hybrid` | Memory (L1) + Disk (L2). Fast reads with persistence. Best for production.  |
+| `none`   | No caching. Every request processes the image fresh.                        |
+
+### Security Settings
+
+| Variable          | Description                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------- |
+| `ALLOWED_DOMAINS` | Restricts which domains can be used as image sources. Supports subdomains (e.g., `example.com` allows `cdn.example.com`). |
+| `ALLOWED_ORIGINS` | Restricts which origins can make CORS requests. Use full URLs (e.g., `https://example.com`).          |
+
+**Example configuration for production:**
+
+```bash
+# Only allow fetching images from your domain
+ALLOWED_DOMAINS=example.com
+
+# Only allow your frontend to make requests
+ALLOWED_ORIGINS=https://example.com,https://app.example.com
+
+# Use hybrid cache for best performance
+CACHE_MODE=hybrid
+```
+
 ## Custom Templates
 
 Create JSON template files in the `templates/` directory:
