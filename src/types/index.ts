@@ -20,11 +20,11 @@ export type Position =
 export type WatermarkPosition =
   | "center"
   | "top"
-  | "top left"
-  | "top right"
+  | "top-left"
+  | "top-right"
   | "bottom"
-  | "bottom left"
-  | "bottom right"
+  | "bottom-left"
+  | "bottom-right"
   | "left"
   | "right";
 

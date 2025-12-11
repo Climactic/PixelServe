@@ -11,11 +11,11 @@ import { fetchImage } from "./image-fetcher";
 const GRAVITY_MAP: Record<WatermarkPosition, string> = {
   center: "center",
   top: "north",
-  "top left": "northwest",
-  "top right": "northeast",
+  "top-left": "northwest",
+  "top-right": "northeast",
   bottom: "south",
-  "bottom left": "southwest",
-  "bottom right": "southeast",
+  "bottom-left": "southwest",
+  "bottom-right": "southeast",
   left: "west",
   right: "east",
 };
@@ -240,7 +240,7 @@ export async function processImage(
 
       // Calculate position with padding
       const padding = params.wm_padding || 0;
-      const position = params.wm_position || "bottom right";
+      const position = params.wm_position || "bottom-right";
       const gravity = GRAVITY_MAP[position] || "southeast";
 
       // For padding, we need to use top/left offsets instead of gravity

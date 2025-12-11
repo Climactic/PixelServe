@@ -24,6 +24,7 @@ export const config = {
   // Security
   allowedDomains: (process.env.ALLOWED_DOMAINS || "")
     .split(",")
+    .map((d) => d.trim().toLowerCase())
     .filter(Boolean),
   blockedDomains: ["localhost", "127.0.0.1", "0.0.0.0", "::1"],
   maxImageSize: parseInt(process.env.MAX_IMAGE_SIZE || "10485760", 10), // 10MB

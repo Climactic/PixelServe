@@ -108,11 +108,11 @@ Transform remote images with URL parameters.
 
 ```
 ┌─────────────┬─────────────┬─────────────┐
-│  top left   │     top     │  top right  │
+│  top-left   │     top     │  top-right  │
 ├─────────────┼─────────────┼─────────────┤
 │    left     │   center    │    right    │
 ├─────────────┼─────────────┼─────────────┤
-│ bottom left │   bottom    │ bottom right│
+│ bottom-left │   bottom    │ bottom-right│
 └─────────────┴─────────────┴─────────────┘
 ```
 
@@ -123,10 +123,10 @@ Transform remote images with URL parameters.
 | `bottom`       | Bottom center                               |
 | `left`         | Left center                                 |
 | `right`        | Right center                                |
-| `top left`     | Top-left corner                             |
-| `top right`    | Top-right corner                            |
-| `bottom left`  | Bottom-left corner                          |
-| `bottom right` | Bottom-right corner                         |
+| `top-left`     | Top-left corner                             |
+| `top-right`    | Top-right corner                            |
+| `bottom-left`  | Bottom-left corner                          |
+| `bottom-right` | Bottom-right corner                         |
 | `entropy`      | Focus on area with highest detail           |
 | `attention`    | Focus on area most likely to draw attention |
 
