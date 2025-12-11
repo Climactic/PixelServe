@@ -38,7 +38,7 @@ const app = new Elysia()
       og: "/og?title=<title>&description=<desc>&bg=<hex>&fg=<hex>",
       health: "/health",
     },
-    documentation: "https://github.com/your-repo/pixelserve",
+    documentation: "https://github.com/climactic/pixelserve",
   }))
   .use(healthRoutes)
   .use(imageRoutes)
@@ -60,19 +60,39 @@ function getCacheInfo(): string {
   }
 }
 
+// ANSI color codes
+const c = {
+	reset: "\x1b[0m",
+	bold: "\x1b[1m",
+	dim: "\x1b[2m",
+	cyan: "\x1b[36m",
+	magenta: "\x1b[35m",
+	green: "\x1b[32m",
+	yellow: "\x1b[33m",
+	blue: "\x1b[34m",
+};
+
 console.log(`
-╔═══════════════════════════════════════════════════════╗
-║                    PixelServe                         ║
-╠═══════════════════════════════════════════════════════╣
-║  Server running at: http://localhost:${config.port.toString().padEnd(5)}            ║
-║                                                       ║
-║  Endpoints:                                           ║
-║    GET /image  - Image processing                     ║
-║    GET /og     - OG image generation                  ║
-║    GET /health - Health check                         ║
-║                                                       ║
-║  Cache: ${getCacheInfo().padEnd(43)} ║
-╚═══════════════════════════════════════════════════════╝
+${c.magenta}  ____  _          _ ____
+ |  _ \\(_)_  _____| / ___|  ___ _ ____   _____
+ | |_) | \\ \\/ / _ \\ \\___ \\ / _ \\ '__\\ \\ / / _ \\
+ |  __/| |>  <  __/ |___) |  __/ |   \\ V /  __/
+ |_|   |_/_/\\_\\___|_|____/ \\___|_|    \\_/ \\___|${c.reset}
+
+  ${c.dim}High-performance image processing microservice${c.reset}
+
+  ${c.bold}Server:${c.reset}    ${c.cyan}http://localhost:${config.port}${c.reset}
+  ${c.bold}Cache:${c.reset}     ${c.yellow}${getCacheInfo()}${c.reset}
+
+  ${c.bold}Endpoints:${c.reset}
+    ${c.green}/image${c.reset}   Transform and optimize images
+    ${c.green}/og${c.reset}      Generate Open Graph images
+    ${c.green}/health${c.reset}  Health check & stats
+
+  ${c.bold}Links:${c.reset}
+    ${c.dim}GitHub:${c.reset}  ${c.blue}https://github.com/climactic/pixelserve${c.reset}
+    ${c.dim}Sponsor:${c.reset} ${c.magenta}https://github.com/sponsors/climactic${c.reset}
+    ${c.dim}Discord:${c.reset} ${c.blue}https://go.climactic.co/discord${c.reset}
 `);
 
 export type App = typeof app;
