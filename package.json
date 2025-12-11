@@ -17,6 +17,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@elysiajs/cors": "^1.4.0",
     "@resvg/resvg-js": "^2.6.2",
     "elysia": "^1.4.18",
     "satori": "^0.18.3",

@@ -1,3 +1,4 @@
+import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { config } from "./config";
 import { healthRoutes } from "./routes/health";
@@ -11,6 +12,7 @@ if (config.cacheMode === "disk") {
 }
 
 const app = new Elysia()
+  .use(cors())
   .onError(({ error, code, set }) => {
     // Don't log Elysia's built-in NOT_FOUND errors (these are normal 404s)
     if (code === "NOT_FOUND") {
