@@ -231,14 +231,15 @@ Configure via environment variables:
 PORT=3000
 
 # Caching
-CACHE_MODE=disk          # disk, memory, or none
+CACHE_MODE=disk          # disk, memory, hybrid, or none
 CACHE_DIR=./cache
 CACHE_TTL=86400          # 24 hours
 MAX_CACHE_SIZE=1073741824  # 1GB
 MAX_MEMORY_CACHE_ITEMS=1000
 
 # Security
-ALLOWED_DOMAINS=         # Comma-separated allowlist (empty = allow all)
+ALLOWED_DOMAINS=         # Comma-separated source image domains (empty = allow all)
+ALLOWED_ORIGINS=         # Comma-separated CORS origins (empty = allow all)
 MAX_IMAGE_SIZE=10485760  # 10MB
 REQUEST_TIMEOUT=30000    # 30 seconds
 

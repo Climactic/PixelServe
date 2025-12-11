@@ -6,13 +6,17 @@ import { imageRoutes } from "./routes/image";
 import { ogRoutes } from "./routes/og";
 import { startCacheCleanup } from "./services/cache";
 
-// Ensure cache directory exists (only for disk mode)
-if (config.cacheMode === "disk") {
+// Ensure cache directory exists (for disk and hybrid modes)
+if (config.cacheMode === "disk" || config.cacheMode === "hybrid") {
   await Bun.$`mkdir -p ${config.cacheDir}`.quiet();
 }
 
 const app = new Elysia()
-  .use(cors())
+  .use(
+    cors({
+      origin: config.allowedOrigins.length > 0 ? config.allowedOrigins : true,
+    }),
+  )
   .onError(({ error, code, set }) => {
     // Don't log Elysia's built-in NOT_FOUND errors (these are normal 404s)
     if (code === "NOT_FOUND") {
@@ -57,6 +61,8 @@ function getCacheInfo(): string {
       return `disk (${config.cacheDir})`;
     case "memory":
       return `memory (max ${config.maxMemoryCacheItems} items)`;
+    case "hybrid":
+      return `hybrid (memory + ${config.cacheDir})`;
     case "none":
       return "disabled";
   }

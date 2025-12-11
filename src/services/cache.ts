@@ -154,6 +154,18 @@ export async function getCached(key: string): Promise<Buffer | null> {
       return getDiskCached(key);
     case "memory":
       return getMemoryCached(key);
+    case "hybrid": {
+      // Try memory first (L1), then disk (L2)
+      const memoryHit = getMemoryCached(key);
+      if (memoryHit) return memoryHit;
+
+      const diskHit = await getDiskCached(key);
+      if (diskHit) {
+        // Promote to memory cache
+        setMemoryCache(key, diskHit);
+      }
+      return diskHit;
+    }
     case "none":
       return null;
     default:
@@ -172,6 +184,10 @@ export async function setCache(
     case "memory":
       setMemoryCache(key, data);
       return;
+    case "hybrid":
+      // Write to both memory (L1) and disk (L2)
+      setMemoryCache(key, data);
+      return setDiskCache(key, data);
     case "none":
       return;
   }
@@ -197,14 +213,7 @@ export function getCacheHeaders(format: ImageFormat): Record<string, string> {
 // Background cache cleanup - runs periodically to remove expired entries
 let cleanupInterval: ReturnType<typeof setInterval> | null = null;
 
-export async function cleanupCache(): Promise<number> {
-  if (config.cacheMode === "none") return 0;
-
-  if (config.cacheMode === "memory") {
-    return memoryCache.cleanup();
-  }
-
-  // Disk cleanup
+async function cleanupDiskCache(): Promise<number> {
   const maxAgeMinutes = Math.floor(config.cacheTTL / 60);
   let deleted = 0;
 
@@ -226,6 +235,23 @@ export async function cleanupCache(): Promise<number> {
   }
 
   return deleted;
+}
+
+export async function cleanupCache(): Promise<number> {
+  switch (config.cacheMode) {
+    case "none":
+      return 0;
+    case "memory":
+      return memoryCache.cleanup();
+    case "disk":
+      return cleanupDiskCache();
+    case "hybrid": {
+      // Clean both caches
+      const memoryDeleted = memoryCache.cleanup();
+      const diskDeleted = await cleanupDiskCache();
+      return memoryDeleted + diskDeleted;
+    }
+  }
 }
 
 export function startCacheCleanup(intervalMs: number = 3600000): void {
@@ -261,6 +287,12 @@ export function getCacheStats(): {
       return { mode: "memory", items: memoryCache.size() };
     case "disk":
       return { mode: "disk", directory: config.cacheDir };
+    case "hybrid":
+      return {
+        mode: "hybrid",
+        items: memoryCache.size(),
+        directory: config.cacheDir,
+      };
     case "none":
       return { mode: "none" };
   }
