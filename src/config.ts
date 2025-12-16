@@ -35,6 +35,7 @@ const ConfigSchema = Type.Object({
   blockedDomains: Type.Array(Type.String(), {
     default: ["localhost", "127.0.0.1", "0.0.0.0", "::1"],
   }),
+  allowSelfReference: Type.Boolean({ default: false }), // Allow fetching from own /og endpoint
   maxImageSize: Type.Number({ default: 10485760, minimum: 0 }), // 10MB
   requestTimeout: Type.Number({ default: 30000, minimum: 0 }), // 30s
 
@@ -87,6 +88,7 @@ const rawConfig = {
   allowedDomains: parseListLower(process.env.ALLOWED_DOMAINS),
   allowedOrigins: parseList(process.env.ALLOWED_ORIGINS),
   blockedDomains: ["localhost", "127.0.0.1", "0.0.0.0", "::1"],
+  allowSelfReference: process.env.ALLOW_SELF_REFERENCE === "true",
   maxImageSize: parseInt(process.env.MAX_IMAGE_SIZE || "10485760", 10),
   requestTimeout: parseInt(process.env.REQUEST_TIMEOUT || "30000", 10),
   defaultQuality: 80,

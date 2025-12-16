@@ -37,6 +37,19 @@ export async function validateUrl(urlString: string): Promise<URL> {
   // Block known dangerous hostnames
   const hostname = url.hostname.toLowerCase();
 
+  // Check if this is a self-reference (request to our own server)
+  const isSelfReference =
+    (hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "::1") &&
+    url.pathname.startsWith("/og");
+
+  // Allow self-reference if configured (for /image -> /og chaining)
+  if (isSelfReference && config.allowSelfReference) {
+    return url;
+  }
+
   if (
     config.blockedDomains.some(
       (d) => hostname === d || hostname.endsWith(`.${d}`),

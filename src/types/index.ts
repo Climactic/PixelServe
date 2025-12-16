@@ -59,6 +59,8 @@ export interface ImageParams {
   wm_color?: string; // Text color for text watermark (hex)
 }
 
+export type ImageFit = "cover" | "contain" | "fill" | "tile";
+
 export interface OGParams {
   title?: string;
   description?: string;
@@ -72,6 +74,8 @@ export interface OGParams {
   // Images
   image?: string;
   logo?: string;
+  imageOpacity?: number; // Background image opacity (0-1)
+  imageFit?: ImageFit; // Background image fit mode
   w?: number;
   h?: number;
   // Inline template config (base64-encoded JSON or URL-safe JSON)

@@ -233,6 +233,29 @@ function buildElement(
   }
 }
 
+// Get background size value from imageFit param
+function getBackgroundSize(
+  fit?: "cover" | "contain" | "fill" | "tile",
+): string {
+  switch (fit) {
+    case "contain":
+      return "contain";
+    case "fill":
+      return "100% 100%";
+    case "tile":
+      return "auto"; // For tiling, we use repeat
+    default:
+      return "cover";
+  }
+}
+
+// Get background repeat value from imageFit param
+function getBackgroundRepeat(
+  fit?: "cover" | "contain" | "fill" | "tile",
+): string {
+  return fit === "tile" ? "repeat" : "no-repeat";
+}
+
 // Build template from config
 export function buildTemplateFromConfig(
   config: CustomTemplateConfig,
@@ -244,6 +267,14 @@ export function buildTemplateFromConfig(
   // Priority: fontFamilyOverride (from API param) > layout.fontFamily > "Inter"
   const fontFamily = fontFamilyOverride || layout.fontFamily || "Inter";
 
+  // Check if we have a background image that needs opacity handling
+  const bgImageUrl = layout.backgroundImage
+    ? replaceVariables(layout.backgroundImage, params)
+    : params.image || null;
+  const imageOpacity = params.imageOpacity ?? 1;
+  const imageFit = params.imageFit || "cover";
+  const needsImageLayer = bgImageUrl && imageOpacity < 1;
+
   const rootStyle: Record<string, unknown> = {
     width: "100%",
     height: "100%",
@@ -253,9 +284,10 @@ export function buildTemplateFromConfig(
     justifyContent: getFlexAlign(layout.justify),
     padding: layout.padding || 60,
     fontFamily,
+    position: "relative",
   };
 
-  // Background
+  // Background color (always applied as base)
   if (layout.backgroundGradient) {
     rootStyle.background = layout.backgroundGradient;
   } else if (layout.backgroundColor) {
@@ -267,13 +299,17 @@ export function buildTemplateFromConfig(
     rootStyle.backgroundColor = `#${params.bg || "1a1a2e"}`;
   }
 
-  // Background image
-  if (layout.backgroundImage) {
-    const bgImage = replaceVariables(layout.backgroundImage, params);
-    if (bgImage) {
-      rootStyle.backgroundImage = `url(${bgImage})`;
-      rootStyle.backgroundSize = "cover";
+  // Background image handling
+  if (bgImageUrl) {
+    if (needsImageLayer) {
+      // For opacity < 1, we'll create a separate layer
+      // Don't add backgroundImage to root - we'll use an overlay
+    } else {
+      // Full opacity - use standard background image
+      rootStyle.backgroundImage = `url(${bgImageUrl})`;
+      rootStyle.backgroundSize = getBackgroundSize(imageFit);
       rootStyle.backgroundPosition = "center";
+      rootStyle.backgroundRepeat = getBackgroundRepeat(imageFit);
     }
   }
 
@@ -281,6 +317,55 @@ export function buildTemplateFromConfig(
   const children = layout.elements
     .map((el) => buildElement(el, params))
     .filter((c): c is ElementNode => c !== null);
+
+  // If we need an image layer with opacity, wrap content
+  if (needsImageLayer && bgImageUrl) {
+    // Create image layer with opacity
+    const imageLayer = createElement("div", {
+      style: {
+        display: "flex",
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundImage: `url(${bgImageUrl})`,
+        backgroundSize: getBackgroundSize(imageFit),
+        backgroundPosition: "center",
+        backgroundRepeat: getBackgroundRepeat(imageFit),
+        opacity: imageOpacity,
+      },
+    });
+
+    // Create content layer (above image)
+    const contentLayer = createElement(
+      "div",
+      {
+        style: {
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: layout.direction || "column",
+          alignItems: getFlexAlign(layout.align),
+          justifyContent: getFlexAlign(layout.justify),
+          padding: layout.padding || 60,
+        },
+      },
+      ...children,
+    );
+
+    // Root without padding (padding is on content layer)
+    const rootStyleNoPadding = { ...rootStyle };
+    delete rootStyleNoPadding.padding;
+
+    return createElement(
+      "div",
+      { style: rootStyleNoPadding },
+      imageLayer,
+      contentLayer,
+    );
+  }
 
   return createElement("div", { style: rootStyle }, ...children);
 }

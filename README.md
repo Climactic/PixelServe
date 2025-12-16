@@ -19,6 +19,7 @@ A high-performance image processing microservice built with Bun, ElysiaJS, and S
 - **Format Conversion** - WebP, AVIF, PNG, JPEG, GIF with quality control
 - **OG Image Generation** - Dynamic social media images using Satori (no headless browser)
 - **Multiple Templates** - 8 built-in templates + JSON-based custom templates
+- **Background Images** - Support for background images with opacity and fit modes (cover, contain, fill, tile)
 - **Smart Caching** - Disk, memory, or no caching with CDN-friendly headers
 - **SSRF Protection** - Blocks private IPs, localhost, and dangerous protocols
 - **Type-Safe** - Full TypeScript with Elysia's TypeBox validation
@@ -151,22 +152,24 @@ Generate Open Graph images for social media sharing.
 /og?title=Hello%20World&description=My%20awesome%20page&template=gradient
 ```
 
-| Parameter     | Type   | Description                                      |
-| ------------- | ------ | ------------------------------------------------ |
-| `title`       | string | Main title text (max 200 chars)                  |
-| `description` | string | Description text (max 500 chars)                 |
-| `template`    | string | Template name (see below)                        |
-| `font`        | string | Font family name (any Google Font)               |
-| `config`      | string | Inline template config (base64/URL-encoded JSON) |
-| `bg`          | string | Background color (hex)                           |
-| `fg`          | string | Text color (hex)                                 |
-| `titleColor`  | string | Title-specific color (hex)                       |
-| `descColor`   | string | Description-specific color (hex)                 |
-| `accentColor` | string | Accent color (hex)                               |
-| `image`       | string | Background image URL                             |
-| `logo`        | string | Logo image URL                                   |
-| `w`           | number | Width (100-2400, default: 1200)                  |
-| `h`           | number | Height (100-1260, default: 630)                  |
+| Parameter      | Type   | Description                                              |
+| -------------- | ------ | -------------------------------------------------------- |
+| `title`        | string | Main title text (max 200 chars)                          |
+| `description`  | string | Description text (max 500 chars)                         |
+| `template`     | string | Template name (see below)                                |
+| `font`         | string | Font family name (any Google Font)                       |
+| `config`       | string | Inline template config (base64/URL-encoded JSON)         |
+| `bg`           | string | Background color (hex)                                   |
+| `fg`           | string | Text color (hex)                                         |
+| `titleColor`   | string | Title-specific color (hex)                               |
+| `descColor`    | string | Description-specific color (hex)                         |
+| `accentColor`  | string | Accent color (hex)                                       |
+| `image`        | string | Background image URL                                     |
+| `imageOpacity` | number | Background image opacity (0-1, default: 1)               |
+| `imageFit`     | string | Background image fit: `cover`, `contain`, `fill`, `tile` |
+| `logo`         | string | Logo image URL                                           |
+| `w`            | number | Width (100-2400, default: 1200)                          |
+| `h`            | number | Height (100-1260, default: 630)                          |
 
 **Built-in Templates:**
 
@@ -212,6 +215,12 @@ Any [Google Font](https://fonts.google.com/) can be used via the `font` paramete
 
 # With logo
 /og?title=Acme%20Inc&logo=https://example.com/logo.png&template=brand
+
+# Background image with opacity
+/og?title=Hero&image=https://example.com/bg.jpg&imageOpacity=0.5
+
+# Tiled background pattern
+/og?title=Pattern&image=https://example.com/pattern.png&imageFit=tile&imageOpacity=0.3
 ```
 
 ### List Templates: `GET /og/templates`
@@ -221,6 +230,21 @@ Returns available templates and usage information.
 ### Health Check: `GET /health`
 
 Returns server health status and cache statistics.
+
+### Post-Processing OG Images
+
+You can pipe OG images through the `/image` endpoint for additional processing like format conversion, compression, or effects. This requires `ALLOW_SELF_REFERENCE=true` in your environment.
+
+```bash
+# Convert OG image to WebP with 80% quality
+/image?url=http://localhost:3000/og?title=Hello&format=webp&q=80
+
+# Resize and add blur effect
+/image?url=http://localhost:3000/og?title=Hello&w=600&blur=2
+
+# Grayscale OG image
+/image?url=http://localhost:3000/og?title=Hello&grayscale=true
+```
 
 ## Configuration
 
@@ -240,6 +264,7 @@ MAX_MEMORY_CACHE_ITEMS=1000
 # Security
 ALLOWED_DOMAINS=         # Comma-separated source image domains (empty = allow all)
 ALLOWED_ORIGINS=         # Comma-separated CORS origins (empty = allow all)
+ALLOW_SELF_REFERENCE=false  # Allow /image to fetch from own /og endpoint
 MAX_IMAGE_SIZE=10485760  # 10MB
 REQUEST_TIMEOUT=30000    # 30 seconds
 
@@ -252,19 +277,20 @@ TEMPLATES_DIR=./templates
 
 ### Cache Modes
 
-| Mode     | Description                                                                 |
-| -------- | --------------------------------------------------------------------------- |
-| `disk`   | Persist to disk only. Survives restarts but slower reads.                   |
-| `memory` | In-memory LRU cache. Fastest but lost on restart.                           |
-| `hybrid` | Memory (L1) + Disk (L2). Fast reads with persistence. Best for production.  |
-| `none`   | No caching. Every request processes the image fresh.                        |
+| Mode     | Description                                                                |
+| -------- | -------------------------------------------------------------------------- |
+| `disk`   | Persist to disk only. Survives restarts but slower reads.                  |
+| `memory` | In-memory LRU cache. Fastest but lost on restart.                          |
+| `hybrid` | Memory (L1) + Disk (L2). Fast reads with persistence. Best for production. |
+| `none`   | No caching. Every request processes the image fresh.                       |
 
 ### Security Settings
 
-| Variable          | Description                                                                                           |
-| ----------------- | ----------------------------------------------------------------------------------------------------- |
-| `ALLOWED_DOMAINS` | Restricts which domains can be used as image sources. Supports subdomains (e.g., `example.com` allows `cdn.example.com`). |
-| `ALLOWED_ORIGINS` | Restricts which origins can make CORS requests. Use full URLs (e.g., `https://example.com`).          |
+| Variable               | Description                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `ALLOWED_DOMAINS`      | Restricts which domains can be used as image sources. Supports subdomains (e.g., `example.com` allows `cdn.example.com`). |
+| `ALLOWED_ORIGINS`      | Restricts which origins can make CORS requests. Use full URLs (e.g., `https://example.com`).                              |
+| `ALLOW_SELF_REFERENCE` | Set to `true` to allow `/image` endpoint to fetch from own `/og` endpoint. Useful for post-processing OG images.          |
 
 **Example configuration for production:**
 

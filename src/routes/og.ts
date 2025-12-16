@@ -27,6 +27,15 @@ const ogQuerySchema = t.Object({
   // Images
   image: t.Optional(t.String()),
   logo: t.Optional(t.String()),
+  imageOpacity: t.Optional(t.Numeric({ minimum: 0, maximum: 1 })),
+  imageFit: t.Optional(
+    t.Union([
+      t.Literal("cover"),
+      t.Literal("contain"),
+      t.Literal("fill"),
+      t.Literal("tile"),
+    ]),
+  ),
   w: t.Optional(t.Numeric({ minimum: 100, maximum: 2400 })),
   h: t.Optional(t.Numeric({ minimum: 100, maximum: 1260 })),
   // Inline template config (base64-encoded JSON or URL-encoded JSON)
@@ -118,6 +127,8 @@ export const ogRoutes = new Elysia({ prefix: "/og" })
         accentColor: query.accentColor,
         image: query.image,
         logo: query.logo,
+        imageOpacity: query.imageOpacity,
+        imageFit: query.imageFit,
         w: query.w,
         h: query.h,
         config: query.config,
