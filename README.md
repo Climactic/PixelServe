@@ -62,11 +62,14 @@ services:
 # Install dependencies
 bun install
 
-# Start the server
+# Start the server (development with hot reload)
 bun run dev
 
-# Or production mode
+# Single process mode
 bun run start
+
+# Clustered mode (recommended for production)
+bun run start:cluster
 ```
 
 Server runs at `http://localhost:3000`
@@ -273,6 +276,9 @@ BROWSER_CACHE_TTL=31536000  # 1 year
 
 # Custom templates
 TEMPLATES_DIR=./templates
+
+# Clustering (Linux only)
+CLUSTER_WORKERS=0        # 0 = auto-detect CPU cores
 ```
 
 ### Cache Modes
@@ -471,6 +477,7 @@ bun test tests/integration
 pixelserve/
 ├── src/
 │   ├── index.ts              # Main server
+│   ├── cluster.ts            # Multi-process cluster manager
 │   ├── config.ts             # Environment configuration
 │   ├── routes/
 │   │   ├── image.ts          # Image processing endpoint
@@ -511,6 +518,31 @@ pixelserve/
 - **Satori**: SVG-based OG generation (no headless browser)
 - **Smart Caching**: SHA256-hashed keys with sharded directory structure
 - **CDN-Friendly**: `Cache-Control: public, max-age=31536000, immutable`
+- **Clustering**: Multi-process support for utilizing all CPU cores
+
+### Clustering
+
+PixelServe supports multi-process clustering on Linux using Bun's `SO_REUSEPORT` for kernel-level load balancing across CPU cores.
+
+```bash
+# Auto-detect CPU cores
+bun run start:cluster
+
+# Specify worker count
+CLUSTER_WORKERS=4 bun run start:cluster
+```
+
+**Docker:** The default Docker image runs in clustered mode automatically.
+
+```bash
+# Override worker count in Docker
+docker run -e CLUSTER_WORKERS=4 ghcr.io/climactic/pixelserve:latest
+```
+
+**Notes:**
+- Clustering requires Linux (uses `SO_REUSEPORT`). On macOS/Windows, it falls back to single process mode with a warning.
+- Each worker maintains its own memory cache; disk cache is shared across all workers.
+- Crashed workers are automatically respawned to maintain availability.
 
 ## Community
 

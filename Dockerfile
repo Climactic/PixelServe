@@ -75,7 +75,8 @@ ENV NODE_ENV=production \
     PORT=3000 \
     CACHE_MODE=disk \
     CACHE_DIR=./cache \
-    TEMPLATES_DIR=./templates
+    TEMPLATES_DIR=./templates \
+    CLUSTER_WORKERS=0
 
 # Switch to non-root user
 USER pixelserve
@@ -87,5 +88,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
 
-# Start the application
-CMD ["bun", "run", "src/index.ts"]
+# Start the application (clustered mode for multi-core utilization)
+CMD ["bun", "run", "src/cluster.ts"]

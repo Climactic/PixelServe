@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "bun --hot src/index.ts",
     "start": "bun src/index.ts",
+    "start:cluster": "bun src/cluster.ts",
     "test": "bun test"
   },
   "devDependencies": {

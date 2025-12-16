@@ -56,6 +56,9 @@ const ConfigSchema = Type.Object({
 
   // Custom templates directory
   templatesDir: Type.String({ default: "./templates" }),
+
+  // Clustering
+  clusterWorkers: Type.Number({ default: 0, minimum: 0 }), // 0 = auto (CPU cores)
 });
 
 // Helper to parse comma-separated list
@@ -101,6 +104,7 @@ const rawConfig = {
   ogDefaultBg: "1a1a2e",
   ogDefaultFg: "ffffff",
   templatesDir: process.env.TEMPLATES_DIR || "./templates",
+  clusterWorkers: parseInt(process.env.CLUSTER_WORKERS || "0", 10),
 };
 
 // Validate and apply defaults

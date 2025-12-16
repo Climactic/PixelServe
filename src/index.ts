@@ -6,6 +6,10 @@ import { imageRoutes } from "./routes/image";
 import { ogRoutes } from "./routes/og";
 import { startCacheCleanup } from "./services/cache";
 
+// Detect if running as a cluster worker
+const isWorker = process.env.PIXELSERVE_WORKER_ID !== undefined;
+const workerId = process.env.PIXELSERVE_WORKER_ID || "0";
+
 // Ensure cache directory exists (for disk and hybrid modes)
 if (config.cacheMode === "disk" || config.cacheMode === "hybrid") {
   await Bun.$`mkdir -p ${config.cacheDir}`.quiet();
@@ -49,10 +53,15 @@ const app = new Elysia()
   .use(healthRoutes)
   .use(imageRoutes)
   .use(ogRoutes)
-  .listen(config.port);
+  .listen({
+    port: config.port,
+    reusePort: isWorker,
+  });
 
-// Start background cache cleanup (every hour)
-startCacheCleanup(3600000);
+// Start background cache cleanup (every hour) - only on primary worker
+if (!isWorker || workerId === "0") {
+  startCacheCleanup(3600000);
+}
 
 // Build cache info string based on mode
 function getCacheInfo(): string {
@@ -66,6 +75,14 @@ function getCacheInfo(): string {
     case "none":
       return "disabled";
   }
+}
+
+// Build process info string
+function getProcessInfo(): string {
+  if (isWorker) {
+    return `Worker #${workerId}`;
+  }
+  return "Single process";
 }
 
 // ANSI color codes
@@ -90,6 +107,7 @@ ${c.magenta}  ____  _          _ ____
   ${c.dim}High-performance image processing microservice${c.reset}
 
   ${c.bold}Server:${c.reset}    ${c.cyan}http://localhost:${config.port}${c.reset}
+  ${c.bold}Process:${c.reset}   ${c.green}${getProcessInfo()}${c.reset}
   ${c.bold}Cache:${c.reset}     ${c.yellow}${getCacheInfo()}${c.reset}
 
   ${c.bold}Endpoints:${c.reset}
