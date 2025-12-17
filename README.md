@@ -189,7 +189,7 @@ Generate Open Graph images for social media sharing.
 
 **Dynamic Fonts:**
 
-Any [Google Font](https://fonts.google.com/) can be used via the `font` parameter. Fonts are loaded dynamically from [Coolify Fonts](https://fonts.coollabs.io/) (a privacy-friendly Google Fonts proxy) and cached locally.
+Any [Google Font](https://fonts.google.com/) can be used via the `font` parameter. Fonts are loaded dynamically and cached locally.
 
 ```bash
 # Use Poppins font
@@ -489,7 +489,7 @@ pixelserve/
 │   │   ├── cache.ts          # Disk/memory caching
 │   │   ├── og-generator.ts   # Satori + resvg OG generation
 │   │   ├── custom-templates.ts # JSON template builder
-│   │   └── fonts.ts          # Dynamic font loading via Coolify Fonts
+│   │   └── fonts.ts          # Dynamic font loading via Google Fonts
 │   ├── utils/
 │   │   ├── url-validator.ts  # SSRF prevention
 │   │   └── errors.ts         # Custom error classes

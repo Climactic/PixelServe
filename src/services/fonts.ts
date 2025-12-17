@@ -38,7 +38,7 @@ function getLocalFontPath(fontName: string, weight: FontWeight): string {
 }
 
 /**
- * Fetch CSS from Coolify Fonts API and parse TTF URLs
+ * Fetch CSS from Google Fonts API and parse TTF URLs
  * Satori requires TTF format, so we request it specifically via User-Agent
  */
 async function fetchFontCss(
@@ -139,7 +139,7 @@ function getClosestWeight(
 }
 
 /**
- * Load a single font variant from Coolify Fonts
+ * Load a single font variant from Google Fonts
  */
 async function loadFontVariant(
   fontName: string,
@@ -231,7 +231,7 @@ async function loadFontVariant(
 
 /**
  * Load fonts for Satori rendering
- * Any Google Font name can be used - it will be fetched dynamically from Coolify Fonts
+ * Any Google Font name can be used - it will be fetched dynamically
  */
 export async function loadFontsForSatori(
   fontName = "Inter",
@@ -295,7 +295,7 @@ export async function preloadDefaultFonts(): Promise<void> {
  * Since we use dynamic loading, we always return true and let the API handle validation
  */
 export function isFontSupported(_fontName: string): boolean {
-  // All Google Fonts are supported via Coolify Fonts API
+  // All Google Fonts are supported via Google Fonts API
   return true;
 }
 

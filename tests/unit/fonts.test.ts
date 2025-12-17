@@ -32,7 +32,7 @@ describe("Fonts Service", () => {
 
   describe("isFontSupported", () => {
     test("returns true for any font (dynamic loading)", () => {
-      // Since we use Coolify Fonts API, any Google Font should work
+      // Since we use Google Fonts API, any Google Font should work
       expect(isFontSupported("Inter")).toBe(true);
       expect(isFontSupported("Roboto")).toBe(true);
       expect(isFontSupported("Some Random Font")).toBe(true);

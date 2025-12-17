@@ -71,7 +71,7 @@ export const ogRoutes = new Elysia({ prefix: "/og" })
       fonts: {
         suggested: suggestedFonts,
         default: "Inter",
-        note: "Any Google Font can be used - fonts are loaded dynamically via Coolify Fonts API",
+        note: "Any Google Font can be used - fonts are loaded dynamically via Google Fonts API",
         usage:
           "Add ?font=<name> to your /og request (e.g., ?font=Poppins, ?font=Playfair+Display)",
       },
