@@ -30,6 +30,44 @@ const app = new Elysia()
       origin: config.allowedOrigins.length > 0 ? config.allowedOrigins : true,
     }),
   )
+  .onRequest(({ request, set }) => {
+    if (config.allowedOrigins.length === 0) return;
+
+    const url = new URL(request.url);
+    if (url.pathname === "/health") return;
+
+    const origin = request.headers.get("Origin");
+    const referer = request.headers.get("Referer");
+
+    if (!origin && !referer) return;
+
+    const sourceOrigin =
+      origin ||
+      (() => {
+        try {
+          return new URL(referer as string).origin;
+        } catch {
+          return referer as string;
+        }
+      })();
+
+    const isAllowed = config.allowedOrigins.some((allowed) => {
+      if (sourceOrigin === allowed) return true;
+      try {
+        const parsed = new URL(sourceOrigin);
+        return (
+          parsed.hostname === allowed || parsed.hostname.endsWith(`.${allowed}`)
+        );
+      } catch {
+        return sourceOrigin === allowed;
+      }
+    });
+
+    if (!isAllowed) {
+      set.status = 403;
+      return { error: "FORBIDDEN", message: "Origin not allowed" };
+    }
+  })
   .onError(({ error, code, set }) => {
     // Don't log Elysia's built-in NOT_FOUND errors (these are normal 404s)
     if (code === "NOT_FOUND") {
