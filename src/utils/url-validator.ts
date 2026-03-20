@@ -43,7 +43,7 @@ export async function validateUrl(urlString: string): Promise<URL> {
       hostname === "127.0.0.1" ||
       hostname === "0.0.0.0" ||
       hostname === "::1") &&
-    url.pathname.startsWith("/og");
+    (url.pathname.startsWith("/og") || url.pathname.startsWith("/image"));
 
   // Allow self-reference if configured (for /image -> /og chaining)
   if (isSelfReference && config.allowSelfReference) {
@@ -88,10 +88,11 @@ export async function validateUrl(urlString: string): Promise<URL> {
       }
     }
 
-    // If no addresses resolved at all, that's suspicious
+    // If no addresses resolved at all, block the request
     if (addresses.length === 0 && ipv6Addresses.length === 0) {
-      // Could be a hosts file entry or local resolver - allow but log
-      console.warn(`No DNS records found for ${hostname}`);
+      throw new ForbiddenError(
+        `DNS resolution failed: no records found for ${hostname}`,
+      );
     }
   } catch (error) {
     if (error instanceof ForbiddenError) {

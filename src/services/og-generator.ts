@@ -11,11 +11,16 @@ import {
 } from "./fonts";
 
 // Preload default fonts at startup
-let defaultFontsLoaded = false;
+let defaultFontsAttempted = false;
 async function ensureDefaultFontsLoaded(): Promise<void> {
-  if (defaultFontsLoaded) return;
-  await preloadDefaultFonts();
-  defaultFontsLoaded = true;
+  if (defaultFontsAttempted) return;
+  defaultFontsAttempted = true;
+  try {
+    await preloadDefaultFonts();
+  } catch (err) {
+    console.warn("Default font preload failed (will retry per-request):", err);
+    defaultFontsAttempted = false;
+  }
 }
 
 // Templates support (all loaded from JSON files)

@@ -4,7 +4,11 @@ import { config } from "./config";
 import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/image";
 import { ogRoutes } from "./routes/og";
-import { startCacheCleanup } from "./services/cache";
+import {
+  disconnectRedisCache,
+  initRedisCache,
+  startCacheCleanup,
+} from "./services/cache";
 
 // Detect if running as a cluster worker
 const isWorker = process.env.PIXELSERVE_WORKER_ID !== undefined;
@@ -13,6 +17,11 @@ const workerId = process.env.PIXELSERVE_WORKER_ID || "0";
 // Ensure cache directory exists (for disk and hybrid modes)
 if (config.cacheMode === "disk" || config.cacheMode === "hybrid") {
   await Bun.$`mkdir -p ${config.cacheDir}`.quiet();
+}
+
+// Initialize Redis cache if configured
+if (config.cacheMode === "redis") {
+  await initRedisCache();
 }
 
 const app = new Elysia()
@@ -72,6 +81,10 @@ function getCacheInfo(): string {
       return `memory (max ${config.maxMemoryCacheItems} items)`;
     case "hybrid":
       return `hybrid (memory + ${config.cacheDir})`;
+    case "redis": {
+      const masked = config.redisUrl.replace(/:\/\/[^@]*@/, "://***@");
+      return `redis (${masked})`;
+    }
     case "none":
       return "disabled";
   }
@@ -120,5 +133,13 @@ ${c.magenta}  ____  _          _ ____
     ${c.dim}Sponsor:${c.reset} ${c.magenta}https://github.com/sponsors/climactic${c.reset}
     ${c.dim}Discord:${c.reset} ${c.blue}https://go.climactic.co/discord${c.reset}
 `);
+
+// Graceful shutdown
+const shutdown = async () => {
+  await disconnectRedisCache();
+  process.exit(0);
+};
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 export type App = typeof app;

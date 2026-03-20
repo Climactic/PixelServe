@@ -6,6 +6,7 @@ const CacheModeSchema = Type.Union([
   Type.Literal("disk"),
   Type.Literal("memory"),
   Type.Literal("hybrid"),
+  Type.Literal("redis"),
   Type.Literal("none"),
 ]);
 
@@ -57,6 +58,12 @@ const ConfigSchema = Type.Object({
   // Custom templates directory
   templatesDir: Type.String({ default: "./templates" }),
 
+  // Redis cache settings
+  redisUrl: Type.String({ default: "redis://localhost:6379" }),
+  redisKeyPrefix: Type.String({ default: "ps:" }),
+  redisConnectionTimeout: Type.Number({ default: 5000, minimum: 0 }),
+  redisMaxRetries: Type.Number({ default: 10, minimum: 0 }),
+
   // Clustering
   clusterWorkers: Type.Number({ default: 0, minimum: 0 }), // 0 = auto (CPU cores)
 });
@@ -104,6 +111,13 @@ const rawConfig = {
   ogDefaultBg: "1a1a2e",
   ogDefaultFg: "ffffff",
   templatesDir: process.env.TEMPLATES_DIR || "./templates",
+  redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
+  redisKeyPrefix: process.env.REDIS_KEY_PREFIX || "ps:",
+  redisConnectionTimeout: parseInt(
+    process.env.REDIS_CONNECTION_TIMEOUT || "5000",
+    10,
+  ),
+  redisMaxRetries: parseInt(process.env.REDIS_MAX_RETRIES || "10", 10),
   clusterWorkers: parseInt(process.env.CLUSTER_WORKERS || "0", 10),
 };
 

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { RedisClient } from "bun";
 import { type CacheMode, config } from "../config";
 import type { ImageFormat } from "../types";
 
@@ -79,6 +80,67 @@ class LRUCache {
 
 // Initialize memory cache
 const memoryCache = new LRUCache(config.maxMemoryCacheItems);
+
+// Redis client state
+let redisClient: RedisClient | null = null;
+let redisConnected = false;
+
+export async function initRedisCache(): Promise<void> {
+  if (config.cacheMode !== "redis") return;
+
+  try {
+    redisClient = new RedisClient(config.redisUrl, {
+      connectionTimeout: config.redisConnectionTimeout,
+      autoReconnect: true,
+      maxRetries: config.redisMaxRetries,
+      enableOfflineQueue: true,
+      enableAutoPipelining: true,
+    });
+    await redisClient.connect();
+    redisConnected = true;
+    console.log("Redis cache connected");
+  } catch (error) {
+    console.error("Redis connection failed:", error);
+    redisConnected = false;
+  }
+}
+
+export async function disconnectRedisCache(): Promise<void> {
+  if (redisClient) {
+    try {
+      await redisClient.quit();
+    } catch {
+      // Ignore disconnect errors during shutdown
+    }
+    redisClient = null;
+    redisConnected = false;
+  }
+}
+
+function redisKey(key: string): string {
+  return `${config.redisKeyPrefix}${key}`;
+}
+
+// Redis cache operations
+async function getRedisCached(key: string): Promise<Buffer | null> {
+  if (!redisClient || !redisConnected) return null;
+  try {
+    const data = await redisClient.getBuffer(redisKey(key));
+    return data ? Buffer.from(data) : null;
+  } catch (error) {
+    console.error("Redis get error:", error);
+    return null;
+  }
+}
+
+async function setRedisCache(key: string, data: Buffer): Promise<void> {
+  if (!redisClient || !redisConnected) return;
+  try {
+    await redisClient.set(redisKey(key), data, "EX", config.cacheTTL);
+  } catch (error) {
+    console.error("Redis set error:", error);
+  }
+}
 
 export function generateCacheKey(
   params: Record<string, string | number | boolean | undefined>,
@@ -166,6 +228,8 @@ export async function getCached(key: string): Promise<Buffer | null> {
       }
       return diskHit;
     }
+    case "redis":
+      return getRedisCached(key);
     case "none":
       return null;
     default:
@@ -188,6 +252,8 @@ export async function setCache(
       // Write to both memory (L1) and disk (L2)
       setMemoryCache(key, data);
       return setDiskCache(key, data);
+    case "redis":
+      return setRedisCache(key, data);
     case "none":
       return;
   }
@@ -240,6 +306,7 @@ async function cleanupDiskCache(): Promise<number> {
 export async function cleanupCache(): Promise<number> {
   switch (config.cacheMode) {
     case "none":
+    case "redis":
       return 0;
     case "memory":
       return memoryCache.cleanup();
@@ -256,7 +323,7 @@ export async function cleanupCache(): Promise<number> {
 
 export function startCacheCleanup(intervalMs: number = 3600000): void {
   if (cleanupInterval) return;
-  if (config.cacheMode === "none") return;
+  if (config.cacheMode === "none" || config.cacheMode === "redis") return;
 
   cleanupInterval = setInterval(async () => {
     const deleted = await cleanupCache();
@@ -276,11 +343,26 @@ export function stopCacheCleanup(): void {
   }
 }
 
+// Mask credentials in Redis URL for display
+function maskRedisUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) {
+      parsed.password = "***";
+    }
+    return parsed.toString();
+  } catch {
+    return url.replace(/:\/\/[^@]*@/, "://***@");
+  }
+}
+
 // Export for health check
 export function getCacheStats(): {
   mode: CacheMode;
   items?: number;
   directory?: string;
+  connected?: boolean;
+  url?: string;
 } {
   switch (config.cacheMode) {
     case "memory":
@@ -292,6 +374,12 @@ export function getCacheStats(): {
         mode: "hybrid",
         items: memoryCache.size(),
         directory: config.cacheDir,
+      };
+    case "redis":
+      return {
+        mode: "redis",
+        connected: redisConnected,
+        url: maskRedisUrl(config.redisUrl),
       };
     case "none":
       return { mode: "none" };
