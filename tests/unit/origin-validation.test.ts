@@ -1,47 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { Elysia } from "elysia";
+import { createOriginGuard } from "../../src/middleware/origin-validator";
 
 function createAppWithOriginValidation(allowedOrigins: string[]) {
   return new Elysia()
-    .onRequest(({ request, set }) => {
-      if (allowedOrigins.length === 0) return;
-
-      const url = new URL(request.url);
-      if (url.pathname === "/health") return;
-
-      const origin = request.headers.get("Origin");
-      const referer = request.headers.get("Referer");
-
-      if (!origin && !referer) return;
-
-      const sourceOrigin =
-        origin ||
-        (() => {
-          try {
-            return new URL(referer as string).origin;
-          } catch {
-            return referer as string;
-          }
-        })();
-
-      const isAllowed = allowedOrigins.some((allowed) => {
-        if (sourceOrigin === allowed) return true;
-        try {
-          const parsed = new URL(sourceOrigin);
-          return (
-            parsed.hostname === allowed ||
-            parsed.hostname.endsWith(`.${allowed}`)
-          );
-        } catch {
-          return sourceOrigin === allowed;
-        }
-      });
-
-      if (!isAllowed) {
-        set.status = 403;
-        return { error: "FORBIDDEN", message: "Origin not allowed" };
-      }
-    })
+    .onRequest(createOriginGuard(allowedOrigins))
     .get("/", () => ({ status: "ok" }))
     .get("/health", () => ({ status: "healthy" }))
     .get("/image", () => ({ status: "ok" }));
@@ -54,9 +17,9 @@ describe("Origin Validation", () => {
       "https://trusted.io",
     ]);
 
-    test("allows requests without Origin or Referer headers", async () => {
+    test("blocks requests without Origin or Referer headers", async () => {
       const response = await app.handle(new Request("http://localhost/"));
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(403);
     });
 
     test("allows requests with an allowed Origin (bare domain match)", async () => {
@@ -128,6 +91,15 @@ describe("Origin Validation", () => {
       const response = await app.handle(
         new Request("http://localhost/", {
           headers: { Origin: "https://a.b.example.com" },
+        }),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    test("allows subdomain matching against full-URL allowed entry", async () => {
+      const response = await app.handle(
+        new Request("http://localhost/", {
+          headers: { Origin: "https://sub.trusted.io" },
         }),
       );
       expect(response.status).toBe(200);

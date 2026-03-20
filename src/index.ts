@@ -1,6 +1,8 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { config } from "./config";
+import { CACHE_CLEANUP_INTERVAL_MS, SHUTDOWN_TIMEOUT_MS } from "./constants";
+import { createOriginGuard } from "./middleware/origin-validator";
 import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/image";
 import { ogRoutes } from "./routes/og";
@@ -31,44 +33,7 @@ const app = new Elysia()
       origin: config.allowedOrigins.length > 0 ? config.allowedOrigins : true,
     }),
   )
-  .onRequest(({ request, set }) => {
-    if (config.allowedOrigins.length === 0) return;
-
-    const url = new URL(request.url);
-    if (url.pathname === "/health") return;
-
-    const origin = request.headers.get("Origin");
-    const referer = request.headers.get("Referer");
-
-    if (!origin && !referer) return;
-
-    const sourceOrigin =
-      origin ||
-      (() => {
-        try {
-          return new URL(referer as string).origin;
-        } catch {
-          return referer as string;
-        }
-      })();
-
-    const isAllowed = config.allowedOrigins.some((allowed) => {
-      if (sourceOrigin === allowed) return true;
-      try {
-        const parsed = new URL(sourceOrigin);
-        return (
-          parsed.hostname === allowed || parsed.hostname.endsWith(`.${allowed}`)
-        );
-      } catch {
-        return sourceOrigin === allowed;
-      }
-    });
-
-    if (!isAllowed) {
-      set.status = 403;
-      return { error: "FORBIDDEN", message: "Origin not allowed" };
-    }
-  })
+  .onRequest(createOriginGuard(config.allowedOrigins))
   .onError(({ error, code, set }) => {
     // Don't log Elysia's built-in NOT_FOUND errors (these are normal 404s)
     if (code === "NOT_FOUND") {
@@ -108,7 +73,7 @@ const app = new Elysia()
 
 // Start background cache cleanup (every hour) - only on primary worker
 if (!isWorker || workerId === "0") {
-  startCacheCleanup(3600000);
+  startCacheCleanup(CACHE_CLEANUP_INTERVAL_MS);
 }
 
 // Build cache info string based on mode
@@ -173,11 +138,16 @@ ${c.magenta}  ____  _          _ ____
 
 // Graceful shutdown — stop server before tearing down Redis
 const shutdown = async () => {
-  if (typeof app.stop === "function") {
-    await app.stop();
+  const forceExit = setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS);
+  try {
+    if (typeof app.stop === "function") {
+      await app.stop();
+    }
+    await disconnectRedisCache();
+  } finally {
+    clearTimeout(forceExit);
+    process.exit(0);
   }
-  await disconnectRedisCache();
-  process.exit(0);
 };
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);

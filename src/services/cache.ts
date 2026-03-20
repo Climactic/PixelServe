@@ -149,7 +149,7 @@ export function generateCacheKey(
   // Filter out undefined values and sort keys for consistent hashing
   const filtered = Object.entries(params)
     .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .toSorted(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
     .join("&");
 
@@ -238,11 +238,7 @@ export async function getCached(key: string): Promise<Buffer | null> {
   }
 }
 
-export async function setCache(
-  key: string,
-  data: Buffer,
-  _format: ImageFormat,
-): Promise<void> {
+export async function setCache(key: string, data: Buffer): Promise<void> {
   switch (config.cacheMode) {
     case "disk":
       return setDiskCache(key, data);

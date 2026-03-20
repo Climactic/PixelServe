@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { createErrorHandler } from "../middleware/error-handler";
 import {
   generateCacheKey,
   getCached,
@@ -12,7 +13,6 @@ import {
   getTemplateInfo,
 } from "../services/og-generator";
 import type { OGParams } from "../types";
-import { PixelServeError } from "../utils/errors";
 
 const ogQuerySchema = t.Object({
   title: t.Optional(t.String({ maxLength: 200 })),
@@ -45,22 +45,7 @@ const ogQuerySchema = t.Object({
 });
 
 export const ogRoutes = new Elysia({ prefix: "/og" })
-  .onError(({ error, set }) => {
-    if (error instanceof PixelServeError) {
-      set.status = error.statusCode;
-      return {
-        error: error.code,
-        message: error.message,
-      };
-    }
-
-    console.error("OG generation error:", error);
-    set.status = 500;
-    return {
-      error: "INTERNAL_ERROR",
-      message: "An unexpected error occurred",
-    };
-  })
+  .onError(createErrorHandler("OG generation error"))
   // List available templates
   .get("/templates", async () => {
     const info = getTemplateInfo();
@@ -153,7 +138,7 @@ export const ogRoutes = new Elysia({ prefix: "/og" })
       const buffer = await generateOGImage(params);
 
       // Store in cache
-      setCache(cacheKey, buffer, "png").catch((err) =>
+      setCache(cacheKey, buffer).catch((err) =>
         console.error("Cache write error:", err),
       );
 
