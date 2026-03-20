@@ -81,27 +81,29 @@ class LRUCache {
 // Initialize memory cache
 const memoryCache = new LRUCache(config.maxMemoryCacheItems);
 
-// Redis client state
+// Redis client — no "connected" flag. Bun's autoReconnect + enableOfflineQueue
+// handle transient failures; try/catch on each op provides graceful degradation.
 let redisClient: RedisClient | null = null;
-let redisConnected = false;
 
 export async function initRedisCache(): Promise<void> {
   if (config.cacheMode !== "redis") return;
 
+  redisClient = new RedisClient(config.redisUrl, {
+    connectionTimeout: config.redisConnectionTimeout,
+    autoReconnect: true,
+    maxRetries: config.redisMaxRetries,
+    enableOfflineQueue: true,
+    enableAutoPipelining: true,
+  });
+
   try {
-    redisClient = new RedisClient(config.redisUrl, {
-      connectionTimeout: config.redisConnectionTimeout,
-      autoReconnect: true,
-      maxRetries: config.redisMaxRetries,
-      enableOfflineQueue: true,
-      enableAutoPipelining: true,
-    });
     await redisClient.connect();
-    redisConnected = true;
     console.log("Redis cache connected");
   } catch (error) {
-    console.error("Redis connection failed:", error);
-    redisConnected = false;
+    console.error(
+      "Redis initial connection failed (will auto-reconnect):",
+      error,
+    );
   }
 }
 
@@ -113,7 +115,6 @@ export async function disconnectRedisCache(): Promise<void> {
       // Ignore disconnect errors during shutdown
     }
     redisClient = null;
-    redisConnected = false;
   }
 }
 
@@ -123,7 +124,7 @@ function redisKey(key: string): string {
 
 // Redis cache operations
 async function getRedisCached(key: string): Promise<Buffer | null> {
-  if (!redisClient || !redisConnected) return null;
+  if (!redisClient) return null;
   try {
     const data = await redisClient.getBuffer(redisKey(key));
     return data ? Buffer.from(data) : null;
@@ -134,7 +135,7 @@ async function getRedisCached(key: string): Promise<Buffer | null> {
 }
 
 async function setRedisCache(key: string, data: Buffer): Promise<void> {
-  if (!redisClient || !redisConnected) return;
+  if (!redisClient) return;
   try {
     await redisClient.set(redisKey(key), data, "EX", config.cacheTTL);
   } catch (error) {
@@ -378,7 +379,7 @@ export function getCacheStats(): {
     case "redis":
       return {
         mode: "redis",
-        connected: redisConnected,
+        connected: redisClient !== null,
         url: maskRedisUrl(config.redisUrl),
       };
     case "none":
