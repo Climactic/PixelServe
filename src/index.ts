@@ -171,8 +171,11 @@ ${c.magenta}  ____  _          _ ____
     ${c.dim}Discord:${c.reset} ${c.blue}https://go.climactic.co/discord${c.reset}
 `);
 
-// Graceful shutdown
+// Graceful shutdown — stop server before tearing down Redis
 const shutdown = async () => {
+  if (typeof app.stop === "function") {
+    await app.stop();
+  }
   await disconnectRedisCache();
   process.exit(0);
 };
