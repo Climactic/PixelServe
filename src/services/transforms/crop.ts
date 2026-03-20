@@ -11,7 +11,6 @@ export function applyCrop(
   const parts = params.crop.split(",").map(Number);
   if (
     parts.length !== 4 ||
-    parts.some(Number.isNaN) ||
     parts[0] === undefined ||
     parts[1] === undefined ||
     parts[2] === undefined ||
@@ -26,6 +25,19 @@ export function applyCrop(
   const top = parts[1];
   const width = parts[2];
   const height = parts[3];
+
+  if (
+    !Number.isFinite(left) ||
+    !Number.isFinite(top) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height) ||
+    !Number.isInteger(left) ||
+    !Number.isInteger(top) ||
+    !Number.isInteger(width) ||
+    !Number.isInteger(height)
+  ) {
+    throw new ValidationError("Crop dimensions must be finite integers");
+  }
 
   if (left < 0 || top < 0 || width <= 0 || height <= 0) {
     throw new ValidationError("Invalid crop dimensions");

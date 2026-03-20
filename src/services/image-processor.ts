@@ -2,12 +2,12 @@ import sharp from "sharp";
 import { config } from "../config";
 import type { ImageFormat, ImageParams } from "../types";
 import { ImageProcessingError, ValidationError } from "../utils/errors";
+import { fetchImage } from "./image-fetcher";
 import { applyAdjustments } from "./transforms/adjustments";
 import { applyCrop } from "./transforms/crop";
 import { applyOutputFormat } from "./transforms/output";
 import { applyResize } from "./transforms/resize";
 import { applyWatermark } from "./transforms/watermark";
-import { fetchImage } from "./image-fetcher";
 
 export async function processImage(
   params: ImageParams,
@@ -23,7 +23,7 @@ export async function processImage(
 
     // Transform pipeline: crop → resize → adjustments → watermark → output
     pipeline = applyCrop(pipeline, params);
-    pipeline = await applyResize(pipeline, params, imageBuffer, {
+    pipeline = await applyResize(pipeline, params, {
       maxWidth: config.maxWidth,
       maxHeight: config.maxHeight,
     });

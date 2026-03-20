@@ -12,7 +12,10 @@ export function applyOutputFormat(
     case "avif":
       return pipeline.avif({ quality });
     case "png":
-      return pipeline.png({ quality });
+      // PNG quality only applies with palette mode; use compressionLevel for full-color PNGs
+      return pipeline.png({
+        compressionLevel: Math.round(((100 - quality) / 100) * 9),
+      });
     case "jpg":
     case "jpeg":
       return pipeline.jpeg({ quality, mozjpeg: true });

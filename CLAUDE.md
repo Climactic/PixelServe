@@ -31,7 +31,7 @@ bun run build        # Build with tsdown
 
 ## Project Structure
 
-```
+```text
 src/
 ├── index.ts              # Entry point — server setup, CORS, cache init, shutdown
 ├── config.ts             # Env config with TypeBox schema validation

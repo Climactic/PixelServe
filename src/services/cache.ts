@@ -123,11 +123,11 @@ function redisKey(key: string): string {
 }
 
 // Redis cache operations
-async function getRedisCached(key: string): Promise<Buffer | null> {
+async function getRedisCached(key: string): Promise<Uint8Array | null> {
   if (!redisClient) return null;
   try {
     const data = await redisClient.getBuffer(redisKey(key));
-    return data ? Buffer.from(data) : null;
+    return data ?? null;
   } catch (error) {
     console.error("Redis get error:", error);
     return null;
@@ -211,7 +211,7 @@ function setMemoryCache(key: string, data: Buffer): void {
 }
 
 // Unified cache interface
-export async function getCached(key: string): Promise<Buffer | null> {
+export async function getCached(key: string): Promise<Uint8Array | null> {
   switch (config.cacheMode) {
     case "disk":
       return getDiskCached(key);

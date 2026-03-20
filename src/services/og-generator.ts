@@ -87,6 +87,9 @@ export async function generateOGImage(params: OGParams): Promise<Buffer> {
       throw new ImageProcessingError("Failed to load fonts");
     }
 
+    // Use actual loaded font name in case of fallback (e.g., requested font failed, fell back to Inter)
+    const actualFontFamily = fonts[0]?.name || fontFamily;
+
     let element: ElementNode;
 
     // Check for inline template config first (takes highest priority)
@@ -105,14 +108,14 @@ export async function generateOGImage(params: OGParams): Promise<Buffer> {
         );
       }
 
-      element = buildTemplateFromConfig(inlineConfig, params, fontFamily);
+      element = buildTemplateFromConfig(inlineConfig, params, actualFontFamily);
     } else {
       // Get template from loaded templates
       const templateName = params.template || "default";
 
       const template = getCustomTemplate(templateName);
       if (template) {
-        element = buildTemplateFromConfig(template, params, fontFamily);
+        element = buildTemplateFromConfig(template, params, actualFontFamily);
       } else {
         // Fall back to default template if not found
         const defaultTemplate = getCustomTemplate("default");
@@ -121,7 +124,11 @@ export async function generateOGImage(params: OGParams): Promise<Buffer> {
             `Template "${templateName}" not found and no default template available`,
           );
         }
-        element = buildTemplateFromConfig(defaultTemplate, params, fontFamily);
+        element = buildTemplateFromConfig(
+          defaultTemplate,
+          params,
+          actualFontFamily,
+        );
       }
     }
 

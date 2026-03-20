@@ -29,9 +29,10 @@ export async function applyWatermark(
 ): Promise<sharp.Sharp> {
   if (!params.wm_image && !params.wm_text) return pipeline;
 
-  const mainMetadata = await pipeline.clone().metadata();
-  const mainWidth = mainMetadata.width || DEFAULT_FALLBACK_WIDTH;
-  const mainHeight = mainMetadata.height || DEFAULT_FALLBACK_HEIGHT;
+  // Get actual post-transform dimensions by resolving the pipeline
+  const { info } = await pipeline.clone().toBuffer({ resolveWithObject: true });
+  const mainWidth = info.width || DEFAULT_FALLBACK_WIDTH;
+  const mainHeight = info.height || DEFAULT_FALLBACK_HEIGHT;
 
   let watermarkInput: Buffer;
 
@@ -90,10 +91,15 @@ export async function applyWatermark(
 async function renderTextWatermark(params: ImageParams): Promise<Buffer> {
   const fontSize = params.wm_fontsize || DEFAULT_WATERMARK_FONT_SIZE;
   const fontFamily = params.wm_font || "Inter";
-  const color = params.wm_color ? `#${params.wm_color}` : "#ffffff";
+  const color = params.wm_color
+    ? params.wm_color.startsWith("#")
+      ? params.wm_color
+      : `#${params.wm_color}`
+    : "#ffffff";
   const opacity = params.wm_opacity ?? 0.7;
 
   const fonts = await loadFontsForSatori(fontFamily, [400, 700]);
+  const actualFontFamily = fonts[0]?.name || fontFamily;
 
   const estimatedWidth =
     (params.wm_text as string).length * fontSize * TEXT_WIDTH_MULTIPLIER;
@@ -104,7 +110,7 @@ async function renderTextWatermark(params: ImageParams): Promise<Buffer> {
     props: {
       style: {
         display: "flex",
-        fontFamily,
+        fontFamily: actualFontFamily,
         fontSize,
         color,
         opacity,
@@ -153,10 +159,12 @@ async function renderImageWatermark(
     });
   }
 
-  // Apply opacity
+  // Apply opacity by scaling the alpha channel directly
   if (params.wm_opacity !== undefined && params.wm_opacity < 1) {
     const opacity = Math.max(0, Math.min(1, params.wm_opacity));
-    watermarkPipeline = watermarkPipeline.ensureAlpha(opacity);
+    watermarkPipeline = watermarkPipeline
+      .ensureAlpha()
+      .linear([1, 1, 1, opacity], [0, 0, 0, 0]);
   }
 
   return watermarkPipeline.toBuffer();

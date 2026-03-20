@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import type sharp from "sharp";
 import type { ImageParams } from "../../types";
 
 interface ResizeConfig {
@@ -9,21 +9,23 @@ interface ResizeConfig {
 export async function applyResize(
   pipeline: sharp.Sharp,
   params: ImageParams,
-  imageBuffer: Buffer,
   resizeConfig: ResizeConfig,
 ): Promise<sharp.Sharp> {
   if (!params.size && !params.w && !params.h) return pipeline;
 
   if (params.size) {
-    // Size param: percentage (1-100) of original image size
+    // Size param: percentage (1-100) of current image dimensions
     // Skip resize entirely if size=100
     if (params.size < 100) {
-      const metadata = await sharp(imageBuffer).metadata();
-      const originalWidth = metadata.width || 0;
-      const originalHeight = metadata.height || 0;
+      // Resolve the pipeline to get actual post-transform dimensions
+      const { info } = await pipeline
+        .clone()
+        .toBuffer({ resolveWithObject: true });
+      const currentWidth = info.width || 0;
+      const currentHeight = info.height || 0;
       const scale = Math.max(1, params.size) / 100;
-      const width = Math.round(originalWidth * scale);
-      const height = Math.round(originalHeight * scale);
+      const width = Math.max(1, Math.round(currentWidth * scale));
+      const height = Math.max(1, Math.round(currentHeight * scale));
 
       return pipeline.resize({
         width,
