@@ -7,6 +7,7 @@ import { ogRoutes } from "./routes/og";
 import {
   disconnectRedisCache,
   initRedisCache,
+  maskRedisUrl,
   startCacheCleanup,
 } from "./services/cache";
 
@@ -119,10 +120,8 @@ function getCacheInfo(): string {
       return `memory (max ${config.maxMemoryCacheItems} items)`;
     case "hybrid":
       return `hybrid (memory + ${config.cacheDir})`;
-    case "redis": {
-      const masked = config.redisUrl.replace(/:\/\/[^@]*@/, "://***@");
-      return `redis (${masked})`;
-    }
+    case "redis":
+      return `redis (${maskRedisUrl(config.redisUrl)})`;
     case "none":
       return "disabled";
   }

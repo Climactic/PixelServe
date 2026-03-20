@@ -10,15 +10,26 @@ import {
   preloadDefaultFonts,
 } from "./fonts";
 
-// Preload default fonts at startup
+// Preload default fonts at startup (with rate-limited retries)
 let defaultFontsAttempted = false;
+let lastDefaultFontAttempt = 0;
+const FONT_RETRY_INTERVAL_MS = 60_000;
+
 async function ensureDefaultFontsLoaded(): Promise<void> {
   if (defaultFontsAttempted) return;
+
+  const now = Date.now();
+  if (now - lastDefaultFontAttempt < FONT_RETRY_INTERVAL_MS) return;
+  lastDefaultFontAttempt = now;
+
   defaultFontsAttempted = true;
   try {
     await preloadDefaultFonts();
   } catch (err) {
-    console.warn("Default font preload failed (will retry per-request):", err);
+    console.warn(
+      "Default font preload failed (will retry after cooldown):",
+      err,
+    );
     defaultFontsAttempted = false;
   }
 }

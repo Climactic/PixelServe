@@ -345,7 +345,7 @@ export function stopCacheCleanup(): void {
 }
 
 // Mask credentials in Redis URL for display
-function maskRedisUrl(url: string): string {
+export function maskRedisUrl(url: string): string {
   try {
     const parsed = new URL(url);
     if (parsed.password) {
@@ -379,7 +379,7 @@ export function getCacheStats(): {
     case "redis":
       return {
         mode: "redis",
-        connected: redisClient !== null,
+        connected: redisClient?.connected ?? false,
         url: maskRedisUrl(config.redisUrl),
       };
     case "none":

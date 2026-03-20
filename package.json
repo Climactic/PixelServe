@@ -19,7 +19,7 @@
     "@elysiajs/cors": "^1.4.1",
     "@resvg/resvg-js": "^2.6.2",
     "elysia": "^1.4.28",
-    "satori": "^0.18.4",
+    "satori": "^0.26.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
