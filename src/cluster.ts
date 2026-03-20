@@ -35,7 +35,9 @@ function spawnWorker(id: number) {
   worker.exited.then((exitCode) => {
     workers.delete(id);
     if (!shuttingDown && exitCode !== 0) {
-      console.log(`⚠️  Worker #${id} crashed (exit ${exitCode}), respawning...`);
+      console.log(
+        `⚠️  Worker #${id} crashed (exit ${exitCode}), respawning...`,
+      );
       spawnWorker(id);
     }
   });

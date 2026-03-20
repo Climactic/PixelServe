@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { RedisClient } from "bun";
 import { type CacheMode, config } from "../config";
 import type { ImageFormat } from "../types";
 
@@ -80,13 +81,75 @@ class LRUCache {
 // Initialize memory cache
 const memoryCache = new LRUCache(config.maxMemoryCacheItems);
 
+// Redis client — no "connected" flag. Bun's autoReconnect + enableOfflineQueue
+// handle transient failures; try/catch on each op provides graceful degradation.
+let redisClient: RedisClient | null = null;
+
+export async function initRedisCache(): Promise<void> {
+  if (config.cacheMode !== "redis") return;
+
+  redisClient = new RedisClient(config.redisUrl, {
+    connectionTimeout: config.redisConnectionTimeout,
+    autoReconnect: true,
+    maxRetries: config.redisMaxRetries,
+    enableOfflineQueue: true,
+    enableAutoPipelining: true,
+  });
+
+  try {
+    await redisClient.connect();
+    console.log("Redis cache connected");
+  } catch (error) {
+    console.error(
+      "Redis initial connection failed (will auto-reconnect):",
+      error,
+    );
+  }
+}
+
+export async function disconnectRedisCache(): Promise<void> {
+  if (redisClient) {
+    try {
+      redisClient.close();
+    } catch {
+      // Ignore disconnect errors during shutdown
+    }
+    redisClient = null;
+  }
+}
+
+function redisKey(key: string): string {
+  return `${config.redisKeyPrefix}${key}`;
+}
+
+// Redis cache operations
+async function getRedisCached(key: string): Promise<Uint8Array | null> {
+  if (!redisClient) return null;
+  try {
+    const data = await redisClient.getBuffer(redisKey(key));
+    return data ?? null;
+  } catch (error) {
+    console.error("Redis get error:", error);
+    return null;
+  }
+}
+
+async function setRedisCache(key: string, data: Buffer): Promise<void> {
+  if (!redisClient) return;
+  try {
+    await redisClient.set(redisKey(key), data, "EX", config.cacheTTL);
+  } catch (error) {
+    console.error("Redis set error:", error);
+  }
+}
+
 export function generateCacheKey(
   params: Record<string, string | number | boolean | undefined>,
 ): string {
   // Filter out undefined values and sort keys for consistent hashing
   const filtered = Object.entries(params)
     .filter(([, v]) => v !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .toSorted(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
     .join("&");
 
@@ -148,7 +211,7 @@ function setMemoryCache(key: string, data: Buffer): void {
 }
 
 // Unified cache interface
-export async function getCached(key: string): Promise<Buffer | null> {
+export async function getCached(key: string): Promise<Uint8Array | null> {
   switch (config.cacheMode) {
     case "disk":
       return getDiskCached(key);
@@ -166,6 +229,8 @@ export async function getCached(key: string): Promise<Buffer | null> {
       }
       return diskHit;
     }
+    case "redis":
+      return getRedisCached(key);
     case "none":
       return null;
     default:
@@ -173,11 +238,7 @@ export async function getCached(key: string): Promise<Buffer | null> {
   }
 }
 
-export async function setCache(
-  key: string,
-  data: Buffer,
-  _format: ImageFormat,
-): Promise<void> {
+export async function setCache(key: string, data: Buffer): Promise<void> {
   switch (config.cacheMode) {
     case "disk":
       return setDiskCache(key, data);
@@ -188,6 +249,8 @@ export async function setCache(
       // Write to both memory (L1) and disk (L2)
       setMemoryCache(key, data);
       return setDiskCache(key, data);
+    case "redis":
+      return setRedisCache(key, data);
     case "none":
       return;
   }
@@ -240,6 +303,7 @@ async function cleanupDiskCache(): Promise<number> {
 export async function cleanupCache(): Promise<number> {
   switch (config.cacheMode) {
     case "none":
+    case "redis":
       return 0;
     case "memory":
       return memoryCache.cleanup();
@@ -256,7 +320,7 @@ export async function cleanupCache(): Promise<number> {
 
 export function startCacheCleanup(intervalMs: number = 3600000): void {
   if (cleanupInterval) return;
-  if (config.cacheMode === "none") return;
+  if (config.cacheMode === "none" || config.cacheMode === "redis") return;
 
   cleanupInterval = setInterval(async () => {
     const deleted = await cleanupCache();
@@ -276,11 +340,26 @@ export function stopCacheCleanup(): void {
   }
 }
 
+// Mask credentials in Redis URL for display
+export function maskRedisUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) {
+      parsed.password = "***";
+    }
+    return parsed.toString();
+  } catch {
+    return url.replace(/:\/\/[^@]*@/, "://***@");
+  }
+}
+
 // Export for health check
 export function getCacheStats(): {
   mode: CacheMode;
   items?: number;
   directory?: string;
+  connected?: boolean;
+  url?: string;
 } {
   switch (config.cacheMode) {
     case "memory":
@@ -292,6 +371,12 @@ export function getCacheStats(): {
         mode: "hybrid",
         items: memoryCache.size(),
         directory: config.cacheDir,
+      };
+    case "redis":
+      return {
+        mode: "redis",
+        connected: redisClient?.connected ?? false,
+        url: maskRedisUrl(config.redisUrl),
       };
     case "none":
       return { mode: "none" };

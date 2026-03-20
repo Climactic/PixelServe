@@ -1,4 +1,5 @@
 import dns from "node:dns/promises";
+import { isIP } from "node:net";
 import { config } from "../config";
 import { ForbiddenError, ValidationError } from "./errors";
 
@@ -18,6 +19,11 @@ const PRIVATE_IP_RANGES = [
 
 function isPrivateIP(ip: string): boolean {
   return PRIVATE_IP_RANGES.some((range) => range.test(ip));
+}
+
+function isDnsNotFound(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException)?.code;
+  return code === "ENOTFOUND" || code === "ENODATA";
 }
 
 export async function validateUrl(urlString: string): Promise<URL> {
@@ -43,7 +49,7 @@ export async function validateUrl(urlString: string): Promise<URL> {
       hostname === "127.0.0.1" ||
       hostname === "0.0.0.0" ||
       hostname === "::1") &&
-    url.pathname.startsWith("/og");
+    (url.pathname.startsWith("/og") || url.pathname.startsWith("/image"));
 
   // Allow self-reference if configured (for /image -> /og chaining)
   if (isSelfReference && config.allowSelfReference) {
@@ -68,37 +74,50 @@ export async function validateUrl(urlString: string): Promise<URL> {
     }
   }
 
+  // Check if hostname is an IP literal — validate directly without DNS
+  if (isIP(hostname)) {
+    if (isPrivateIP(hostname)) {
+      throw new ForbiddenError("Private IP addresses are not allowed");
+    }
+    return url;
+  }
+
   // DNS resolution check to prevent SSRF via DNS rebinding
-  try {
-    // Try IPv4 first
-    const addresses = await dns.resolve4(hostname).catch(() => []);
+  const [v4Result, v6Result] = await Promise.allSettled([
+    dns.resolve4(hostname),
+    dns.resolve6(hostname),
+  ]);
 
-    for (const ip of addresses) {
-      if (isPrivateIP(ip)) {
-        throw new ForbiddenError("Private IP addresses are not allowed");
-      }
+  const addresses: string[] =
+    v4Result.status === "fulfilled" ? v4Result.value : [];
+  const ipv6Addresses: string[] =
+    v6Result.status === "fulfilled" ? v6Result.value : [];
+
+  for (const ip of [...addresses, ...ipv6Addresses]) {
+    if (isPrivateIP(ip)) {
+      throw new ForbiddenError("Private IP addresses are not allowed");
+    }
+  }
+
+  // If no addresses resolved, distinguish "no records" from real errors
+  if (addresses.length === 0 && ipv6Addresses.length === 0) {
+    const v4Error = v4Result.status === "rejected" ? v4Result.reason : null;
+    const v6Error = v6Result.status === "rejected" ? v6Result.reason : null;
+
+    if (v4Error && !isDnsNotFound(v4Error)) {
+      throw new ForbiddenError(
+        `DNS resolution failed for ${hostname}: ${(v4Error as Error).message || v4Error}`,
+      );
+    }
+    if (v6Error && !isDnsNotFound(v6Error)) {
+      throw new ForbiddenError(
+        `DNS resolution failed for ${hostname}: ${(v6Error as Error).message || v6Error}`,
+      );
     }
 
-    // Also check IPv6 if available
-    const ipv6Addresses = await dns.resolve6(hostname).catch(() => []);
-
-    for (const ip of ipv6Addresses) {
-      if (isPrivateIP(ip)) {
-        throw new ForbiddenError("Private IP addresses are not allowed");
-      }
-    }
-
-    // If no addresses resolved at all, that's suspicious
-    if (addresses.length === 0 && ipv6Addresses.length === 0) {
-      // Could be a hosts file entry or local resolver - allow but log
-      console.warn(`No DNS records found for ${hostname}`);
-    }
-  } catch (error) {
-    if (error instanceof ForbiddenError) {
-      throw error;
-    }
-    // DNS resolution failed - might be temporary, allow but log
-    console.warn(`DNS resolution warning for ${hostname}:`, error);
+    throw new ForbiddenError(
+      `DNS resolution failed: no records found for ${hostname}`,
+    );
   }
 
   return url;

@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import { createErrorHandler } from "../middleware/error-handler";
 import {
   generateCacheKey,
   getCached,
@@ -7,7 +8,6 @@ import {
 } from "../services/cache";
 import { processImage } from "../services/image-processor";
 import { type ImageParams, imageParamsToCacheKeyParams } from "../types";
-import { PixelServeError } from "../utils/errors";
 
 const imageQuerySchema = t.Object({
   url: t.String({ minLength: 1 }),
@@ -84,22 +84,7 @@ const imageQuerySchema = t.Object({
 });
 
 export const imageRoutes = new Elysia({ prefix: "/image" })
-  .onError(({ error, set }) => {
-    if (error instanceof PixelServeError) {
-      set.status = error.statusCode;
-      return {
-        error: error.code,
-        message: error.message,
-      };
-    }
-
-    console.error("Unexpected error:", error);
-    set.status = 500;
-    return {
-      error: "INTERNAL_ERROR",
-      message: "An unexpected error occurred",
-    };
-  })
+  .onError(createErrorHandler("Unexpected error"))
   .get(
     "/",
     async ({ query, set }) => {
@@ -150,7 +135,7 @@ export const imageRoutes = new Elysia({ prefix: "/image" })
       const { buffer, format } = await processImage(params);
 
       // Store in cache (async, don't wait)
-      setCache(cacheKey, buffer, format).catch((err) =>
+      setCache(cacheKey, buffer).catch((err) =>
         console.error("Cache write error:", err),
       );
 

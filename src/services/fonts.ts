@@ -169,7 +169,7 @@ async function loadFontVariant(
     }
 
     // Fetch CSS to get font URLs - deduplicate and sort weights (Google Fonts requires ascending order)
-    const weightsToFetch = [...new Set([weight, 400, 700])].sort(
+    const weightsToFetch = [...new Set([weight, 400, 700])].toSorted(
       (a, b) => a - b,
     ) as FontWeight[];
     const urlMap = await fetchFontCss(fontName, weightsToFetch);

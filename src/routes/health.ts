@@ -14,13 +14,18 @@ export const healthRoutes = new Elysia().get("/health", async ({ set }) => {
     version: "1.0.0",
   };
 
-  // Check disk cache directory exists if using disk mode
-  if (config.cacheMode === "disk") {
+  // Check disk cache directory exists if using disk/hybrid mode
+  if (config.cacheMode === "disk" || config.cacheMode === "hybrid") {
     const cacheDir = Bun.file(config.cacheDir);
     const cacheExists = await cacheDir.exists().catch(() => false);
     if (!cacheExists) {
       status.status = "degraded";
     }
+  }
+
+  // Check Redis connection health
+  if (config.cacheMode === "redis" && cacheStats.connected === false) {
+    status.status = "degraded";
   }
 
   set.headers = {

@@ -26,12 +26,12 @@ COPY package.json bun.lock ./
 # Install all dependencies (including dev)
 RUN bun install --frozen-lockfile
 
-# Copy source code
+# Copy source code and config
 COPY src ./src
-COPY tsconfig.json ./
+COPY tsconfig.json tsdown.config.ts ./
 
-# Type check (optional but recommended)
-RUN bun x tsc --noEmit || true
+# Build with tsdown
+RUN bun run build
 
 # ============================================
 # Stage 3: Production runtime

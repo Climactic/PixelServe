@@ -1,10 +1,17 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 import { config } from "./config";
+import { CACHE_CLEANUP_INTERVAL_MS, SHUTDOWN_TIMEOUT_MS } from "./constants";
+import { createOriginGuard } from "./middleware/origin-validator";
 import { healthRoutes } from "./routes/health";
 import { imageRoutes } from "./routes/image";
 import { ogRoutes } from "./routes/og";
-import { startCacheCleanup } from "./services/cache";
+import {
+  disconnectRedisCache,
+  initRedisCache,
+  maskRedisUrl,
+  startCacheCleanup,
+} from "./services/cache";
 
 // Detect if running as a cluster worker
 const isWorker = process.env.PIXELSERVE_WORKER_ID !== undefined;
@@ -15,12 +22,18 @@ if (config.cacheMode === "disk" || config.cacheMode === "hybrid") {
   await Bun.$`mkdir -p ${config.cacheDir}`.quiet();
 }
 
+// Initialize Redis cache if configured
+if (config.cacheMode === "redis") {
+  await initRedisCache();
+}
+
 const app = new Elysia()
   .use(
     cors({
       origin: config.allowedOrigins.length > 0 ? config.allowedOrigins : true,
     }),
   )
+  .onRequest(createOriginGuard(config.allowedOrigins))
   .onError(({ error, code, set }) => {
     // Don't log Elysia's built-in NOT_FOUND errors (these are normal 404s)
     if (code === "NOT_FOUND") {
@@ -60,7 +73,7 @@ const app = new Elysia()
 
 // Start background cache cleanup (every hour) - only on primary worker
 if (!isWorker || workerId === "0") {
-  startCacheCleanup(3600000);
+  startCacheCleanup(CACHE_CLEANUP_INTERVAL_MS);
 }
 
 // Build cache info string based on mode
@@ -72,6 +85,8 @@ function getCacheInfo(): string {
       return `memory (max ${config.maxMemoryCacheItems} items)`;
     case "hybrid":
       return `hybrid (memory + ${config.cacheDir})`;
+    case "redis":
+      return `redis (${maskRedisUrl(config.redisUrl)})`;
     case "none":
       return "disabled";
   }
@@ -120,5 +135,21 @@ ${c.magenta}  ____  _          _ ____
     ${c.dim}Sponsor:${c.reset} ${c.magenta}https://github.com/sponsors/climactic${c.reset}
     ${c.dim}Discord:${c.reset} ${c.blue}https://go.climactic.co/discord${c.reset}
 `);
+
+// Graceful shutdown — stop server before tearing down Redis
+const shutdown = async () => {
+  const forceExit = setTimeout(() => process.exit(1), SHUTDOWN_TIMEOUT_MS);
+  try {
+    if (typeof app.stop === "function") {
+      await app.stop();
+    }
+    await disconnectRedisCache();
+  } finally {
+    clearTimeout(forceExit);
+    process.exit(0);
+  }
+};
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 export type App = typeof app;
