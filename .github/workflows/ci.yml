@@ -26,12 +26,12 @@ jobs:
       - name: Check formatting
         run: bun run format:check
 
-  typecheck:
-    name: Type Check
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -39,8 +39,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run TypeScript check
-        run: bunx tsc --noEmit
+      - name: Build with tsdown
+        run: bun run build
 
   test:
     name: Test

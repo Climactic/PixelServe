@@ -1,11 +1,9 @@
-import type { Context } from "elysia";
-
 /**
  * Creates an Elysia onRequest handler that validates the request origin
  * against a list of allowed origins. Supports subdomain matching.
  */
 export function createOriginGuard(allowedOrigins: string[]) {
-  return ({ request, set }: Context) => {
+  return ({ request, set }: { request: Request; set: { status?: number } }) => {
     if (allowedOrigins.length === 0) return;
 
     const url = new URL(request.url);
