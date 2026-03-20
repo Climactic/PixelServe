@@ -8,7 +8,9 @@ Image processing microservice with OG image generation.
 - **Framework**: Elysia (type-safe HTTP framework)
 - **Image Processing**: Sharp (libvips bindings)
 - **OG Generation**: Satori + resvg-js (SVG-based, no headless browser)
-- **Linting/Formatting**: Biome
+- **Linting**: oxlint (fast Rust-based linter)
+- **Formatting**: oxfmt (Prettier-compatible Rust formatter)
+- **Building**: tsdown (TypeScript bundler based on Rolldown)
 
 ## Commands
 
@@ -18,6 +20,9 @@ bun run dev          # Start with hot reload
 bun run start        # Start production server
 bun test             # Run all tests
 bun test tests/unit  # Run unit tests only
+bun run lint         # Lint with oxlint
+bun run format       # Format with oxfmt
+bun run build        # Build with tsdown
 ```
 
 ## Project Structure
@@ -57,10 +62,10 @@ tests/
 
 ## Code Style
 
-- Use Biome for linting/formatting: `bunx biome check --write .`
+- Use oxfmt for formatting: `bun run format`
+- Use oxlint for linting: `bun run lint`
 - Double quotes for strings
 - Space indentation
-- Organize imports automatically
 
 ## Bun-Specific Notes
 

@@ -390,6 +390,7 @@ Instead of creating template files, you can pass the entire template configurati
 **Encoding Options:**
 
 1. **Base64** (recommended for complex templates):
+
    ```bash
    # Encode your template
    echo '{"layout":{"elements":[{"type":"text","content":"{{title}}","fontSize":48}]}}' | base64
@@ -399,6 +400,7 @@ Instead of creating template files, you can pass the entire template configurati
    ```
 
 2. **URL-safe Base64** (uses `-` and `_` instead of `+` and `/`):
+
    ```bash
    /og?config=eyJsYXlvdXQiOnsiZWxlbWVudHMiOlt7InR5cGUiOiJ0ZXh0IiwiY29udGVudCI6Int7dGl0bGV9fSIsImZvbnRTaXplIjo0OH1dfX0-&title=Hello
    ```
@@ -424,12 +426,12 @@ const template = {
         content: "{{title}}",
         fontSize: 56,
         fontWeight: 700,
-        color: "#ffffff"
+        color: "#ffffff",
       },
       {
         type: "spacer",
         size: 20,
-        showIf: "description"
+        showIf: "description",
       },
       {
         type: "text",
@@ -437,10 +439,10 @@ const template = {
         fontSize: 24,
         color: "#ffffff",
         opacity: 0.9,
-        showIf: "description"
-      }
-    ]
-  }
+        showIf: "description",
+      },
+    ],
+  },
 };
 
 // Encode and use
@@ -540,6 +542,7 @@ docker run -e CLUSTER_WORKERS=4 ghcr.io/climactic/pixelserve:latest
 ```
 
 **Notes:**
+
 - Clustering requires Linux (uses `SO_REUSEPORT`). On macOS/Windows, it falls back to single process mode with a warning.
 - Each worker maintains its own memory cache; disk cache is shared across all workers.
 - Crashed workers are automatically respawned to maintain availability.

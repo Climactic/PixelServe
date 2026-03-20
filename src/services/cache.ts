@@ -110,7 +110,7 @@ export async function initRedisCache(): Promise<void> {
 export async function disconnectRedisCache(): Promise<void> {
   if (redisClient) {
     try {
-      await redisClient.quit();
+      redisClient.close();
     } catch {
       // Ignore disconnect errors during shutdown
     }
