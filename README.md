@@ -20,7 +20,8 @@ A high-performance image processing microservice built with Bun, ElysiaJS, and S
 - **OG Image Generation** - Dynamic social media images using Satori (no headless browser)
 - **Multiple Templates** - 8 built-in templates + JSON-based custom templates
 - **Background Images** - Support for background images with opacity and fit modes (cover, contain, fill, tile)
-- **Smart Caching** - Disk, memory, or no caching with CDN-friendly headers
+- **Text Watermarks** - Add text watermarks with custom fonts, colors, and positioning
+- **Smart Caching** - Disk, memory, Redis, or hybrid caching with CDN-friendly headers
 - **SSRF Protection** - Blocks private IPs, localhost, and dangerous protocols
 - **Type-Safe** - Full TypeScript with Elysia's TypeBox validation
 
@@ -104,9 +105,16 @@ Transform remote images with URL parameters.
 | `tint`        | string  | Tint color (hex, e.g., `ff5500`)                |
 | `trim`        | boolean | Trim whitespace                                 |
 | `crop`        | string  | Crop region `x,y,width,height`                  |
-| `watermark`   | string  | Watermark image URL                             |
+| `size`        | number  | Percentage resize (1-100)                       |
+| `wm_image`    | string  | Watermark image URL                             |
+| `wm_text`     | string  | Watermark text                                  |
 | `wm_position` | string  | Watermark position (see table below)            |
 | `wm_opacity`  | number  | Watermark opacity (0-1)                         |
+| `wm_scale`    | number  | Watermark scale (1-100)                         |
+| `wm_padding`  | number  | Watermark padding (0-500)                       |
+| `wm_font`     | string  | Watermark text font (any Google Font)           |
+| `wm_fontsize` | number  | Watermark text font size (8-200)                |
+| `wm_color`    | string  | Watermark text color (hex, e.g., `ff5500`)      |
 
 **Position Values** (for `position` and `wm_position`):
 
@@ -258,7 +266,7 @@ Configure via environment variables:
 PORT=3000
 
 # Caching
-CACHE_MODE=disk          # disk, memory, hybrid, or none
+CACHE_MODE=disk          # disk, memory, hybrid, redis, or none
 CACHE_DIR=./cache
 CACHE_TTL=86400          # 24 hours
 MAX_CACHE_SIZE=1073741824  # 1GB
@@ -274,6 +282,12 @@ REQUEST_TIMEOUT=30000    # 30 seconds
 # Browser/CDN Cache
 BROWSER_CACHE_TTL=31536000  # 1 year
 
+# Redis (when CACHE_MODE=redis)
+REDIS_URL=redis://localhost:6379
+REDIS_KEY_PREFIX=ps:
+REDIS_CONNECTION_TIMEOUT=5000
+REDIS_MAX_RETRIES=10
+
 # Custom templates
 TEMPLATES_DIR=./templates
 
@@ -288,6 +302,7 @@ CLUSTER_WORKERS=0        # 0 = auto-detect CPU cores
 | `disk`   | Persist to disk only. Survives restarts but slower reads.                  |
 | `memory` | In-memory LRU cache. Fastest but lost on restart.                          |
 | `hybrid` | Memory (L1) + Disk (L2). Fast reads with persistence. Best for production. |
+| `redis`  | Redis-backed cache. Best for distributed/multi-instance deployments.       |
 | `none`   | No caching. Every request processes the image fresh.                       |
 
 ### Security Settings
@@ -481,24 +496,33 @@ pixelserve/
 │   ├── index.ts              # Main server
 │   ├── cluster.ts            # Multi-process cluster manager
 │   ├── config.ts             # Environment configuration
+│   ├── constants.ts          # Named constants (timeouts, limits)
+│   ├── middleware/
+│   │   ├── origin-validator.ts  # Origin/Referer validation guard
+│   │   └── error-handler.ts     # Shared error handler
 │   ├── routes/
 │   │   ├── image.ts          # Image processing endpoint
 │   │   ├── og.ts             # OG image generation endpoint
 │   │   └── health.ts         # Health check
 │   ├── services/
-│   │   ├── image-processor.ts # Sharp transformations
-│   │   ├── image-fetcher.ts  # Remote image fetching
-│   │   ├── cache.ts          # Disk/memory caching
+│   │   ├── image-processor.ts # Sharp pipeline orchestrator
+│   │   ├── image-fetcher.ts  # Remote image fetching with SSRF protection
+│   │   ├── cache.ts          # Multi-backend caching (disk/memory/hybrid/redis)
 │   │   ├── og-generator.ts   # Satori + resvg OG generation
 │   │   ├── custom-templates.ts # JSON template builder
-│   │   └── fonts.ts          # Dynamic font loading via Google Fonts
+│   │   ├── fonts.ts          # Dynamic font loading via Google Fonts
+│   │   └── transforms/       # Individual image transform steps
+│   │       ├── crop.ts
+│   │       ├── resize.ts
+│   │       ├── adjustments.ts
+│   │       ├── watermark.ts
+│   │       └── output.ts
 │   ├── utils/
 │   │   ├── url-validator.ts  # SSRF prevention
 │   │   └── errors.ts         # Custom error classes
 │   └── types/
 │       └── index.ts          # TypeScript interfaces
 ├── cache/                    # Disk cache (gitignored)
-├── fonts/                    # Fonts for OG generation
 ├── templates/                # Custom JSON templates
 └── tests/
     ├── unit/
@@ -507,11 +531,12 @@ pixelserve/
 
 ## Security
 
-- **SSRF Prevention**: Blocks `localhost`, `127.0.0.1`, `0.0.0.0`, `::1`, private IP ranges, and `file://` protocol
+- **SSRF Prevention**: Blocks `localhost`, `127.0.0.1`, `0.0.0.0`, `::1`, private IP ranges, link-local addresses, and `file://` protocol. Redirects are followed manually with re-validation at each hop.
+- **Origin Validation**: Optional `ALLOWED_ORIGINS` blocks requests without a valid Origin/Referer header (subdomain-aware matching)
 - **Input Validation**: TypeBox schemas validate all query parameters
 - **Size Limits**: Max image dimensions (4096x4096) and file size (10MB)
 - **Timeout**: 30-second request timeout prevents hanging connections
-- **Domain Allowlist**: Optional `ALLOWED_DOMAINS` to restrict source URLs
+- **Domain Allowlist**: Optional `ALLOWED_DOMAINS` to restrict source image URLs
 
 ## Performance
 
